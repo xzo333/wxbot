@@ -28,7 +28,7 @@ public class BuckleBattery {
         try {
             List<Userdate> userdates = userMapper.selectList(null);
             for (Userdate userdate : userdates) {
-                if (userdate.getState().equals(0) && userdate.getBattery() > 0) {
+                if (userdate.getBattery() > 0) {
                     userdate.setBattery(userdate.getBattery() - 1);
                     userMapper.updateById(userdate);
                 }
