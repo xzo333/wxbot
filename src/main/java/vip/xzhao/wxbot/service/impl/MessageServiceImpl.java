@@ -68,6 +68,10 @@ public class MessageServiceImpl implements MessageService {
             if (message.getMsg().equals("刷新等级")) {
                 adminService.updateGradeByBattery(message.getFrom_group());
             }
+            //刷新停止晋级等级
+            if (message.getMsg().equals("刷新停止晋级等级")) {
+                adminService.RefreshStopPromotionLevel(message.getFrom_group());
+            }
             //导出下载
             if (message.getMsg().equals("下载实时数据")) {
                 adminService.DownloadRealTimeData(message);
@@ -109,7 +113,7 @@ public class MessageServiceImpl implements MessageService {
                     String nickname = matcherB.group(1).trim();
                     if (nickname.matches("^[\\u4e00-\\u9fa5_a-zA-Z0-9]+$")) {
                         // 昵称校验通过，执行其他操作
-                        adminService.FreezeLevel(message);
+                        adminService.ThawLevel(message);
                     }
                 }
             }

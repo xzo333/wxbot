@@ -35,6 +35,8 @@ public class BuckleBattery {
             }
             msgACT.WebApiClient("", GroupId, "每日减1电池执行成功");
             adminService.updateGradeByBattery(GroupId);
+            Thread.sleep(3000); // 将当前线程睡眠 3 秒钟
+            adminService.RefreshStopPromotionLevel(GroupId);
         } catch (Exception e) {
             msgACT.WebApiClient("", "25984983585997042@openim", "定时出现报错");
         }

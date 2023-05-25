@@ -120,6 +120,32 @@ public class AdminServiceimpl implements AdminService {
     }
 
     @Override
+    public ResponseEntity RefreshStopPromotionLevel(String GroupId) {
+        try {
+            //正式
+            UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.lambda().eq(Userdate::getState, 1)
+                    .eq(Userdate::getGrade,"正式")
+                    .le(Userdate::getBattery, 29) //电量小于等于29
+                    .set(Userdate::getGrade, "见习"); //更新为“见习”
+            int rowsA = userMapper.update(null, updateWrapper);
+            //金牌
+            UpdateWrapper<Userdate> updateWrapperA = new UpdateWrapper<>();
+            updateWrapperA.lambda().eq(Userdate::getState, 1)
+                    .eq(Userdate::getGrade, "金牌")
+                    .between(Userdate::getBattery, 30, 149) //电量介于30到149之间
+                    .set(Userdate::getGrade, "正式"); //更新为“正式”
+            int rowsB = userMapper.update(null, updateWrapperA);
+
+            msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新成功\n" +
+                   rowsB + "个金牌降到了正式\n" + rowsA +  "个正式降到了见习");
+        } catch (Exception e) {
+            msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新失败，呜呜");
+        }
+        return null;
+    }
+
+    @Override
     public ResponseEntity FreezeLevel(Message message) {
         String str = message.getMsg();
         int start = str.indexOf("[") + 1; // 获取 "[" 后面的位置
@@ -129,7 +155,7 @@ public class AdminServiceimpl implements AdminService {
             QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
             queryWrapper.lambda().eq(Userdate::getName, matcher);
             Userdate res = userMapper.selectOne(queryWrapper);
-            if (res.getState().equals(0)) {
+            if (res.getState() == 0) {
                 UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
                 updateWrapper.eq("name", matcher).set("State", "1");
                 userMapper.update(null, updateWrapper);
@@ -155,7 +181,7 @@ public class AdminServiceimpl implements AdminService {
             Userdate res = userMapper.selectOne(queryWrapper);
             if (res.getState() == 1) {
                 UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
-                updateWrapper.eq("name", matcher).set("State", "0");
+                updateWrapper.eq("name", matcher).set("state", "0");
                 userMapper.update(null, updateWrapper);
                 msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n关闭停止晋级成功");
             } else {

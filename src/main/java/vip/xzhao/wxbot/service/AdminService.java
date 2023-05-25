@@ -13,12 +13,19 @@ public interface AdminService {
     ResponseEntity ModifyBattery(Message message);
 
     /**
-     * 更新等级
+     * 刷新等级
      *
      * @param message
      * @return
      */
     ResponseEntity updateGradeByBattery(String message);
+    /**
+     * 刷新停止晋级等级
+     *
+     * @param message
+     * @return
+     */
+    ResponseEntity RefreshStopPromotionLevel(String message);
 
     /**
      * 停止晋级
@@ -29,7 +36,7 @@ public interface AdminService {
     ResponseEntity FreezeLevel(Message message);
 
     /**
-     * 解冻等级
+     * 关闭停止晋级
      *
      * @param message
      * @return

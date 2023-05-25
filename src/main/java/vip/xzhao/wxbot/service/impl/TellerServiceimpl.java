@@ -201,6 +201,7 @@ public class TellerServiceimpl implements TellerService {
                 "取消订单：12346。\n" +
                 "\n" +
                 "下载实时数据\n" +
+                "刷新停止晋级等级\n" +
                 "刷新等级");
         return null;
     }
