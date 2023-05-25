@@ -88,6 +88,10 @@ public class MessageServiceImpl implements MessageService {
                 if (Pattern.matches("^\\[.+\\][+\\-=]电池\\s*(\\d+)", message.getMsg())) {
                     adminService.ModifyBattery(message);
                 }
+                //取消订单
+                if (Pattern.matches("^取消订单：(\\d+)。$", message.getMsg())) {
+                    adminService.CancelOrder(message);
+                }
                 //停止晋级
                 Pattern patternA = Pattern.compile("^\\[(.+?)\\]停止晋级$");
                 Matcher matcherA = patternA.matcher(message.getMsg());
@@ -98,8 +102,8 @@ public class MessageServiceImpl implements MessageService {
                         adminService.FreezeLevel(message);
                     }
                 }
-                //解冻等级,指定管理员
-                Pattern patternB = Pattern.compile("^\\[(.+?)\\]冻结等级$");
+                //关闭停止晋级
+                Pattern patternB = Pattern.compile("^\\[(.+?)\\]关闭停止晋级$");
                 Matcher matcherB = patternB.matcher(message.getMsg());
                 if (matcherB.matches()) {
                     String nickname = matcherB.group(1).trim();

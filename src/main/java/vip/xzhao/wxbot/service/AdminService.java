@@ -21,7 +21,7 @@ public interface AdminService {
     ResponseEntity updateGradeByBattery(String message);
 
     /**
-     * 冻结等级
+     * 停止晋级
      *
      * @param message
      * @return
@@ -43,5 +43,12 @@ public interface AdminService {
      * @return
      */
     ResponseEntity DownloadRealTimeData(Message message);
+    /**
+     * 取消订单
+     *
+     * @param message
+     * @return
+     */
+    ResponseEntity CancelOrder(Message message);
 
 }

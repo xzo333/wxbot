@@ -1,22 +1,30 @@
 package vip.xzhao.wxbot.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
 import vip.xzhao.wxbot.data.Message;
+import vip.xzhao.wxbot.data.Orderdate;
 import vip.xzhao.wxbot.data.Userdate;
+import vip.xzhao.wxbot.mapper.OrderdateMapper;
 import vip.xzhao.wxbot.mapper.UserMapper;
 import vip.xzhao.wxbot.service.AdminService;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AdminServiceimpl implements AdminService {
     public final UserMapper userMapper;
+    public final OrderdateMapper orderdateMapper;
     public final MsgACT msgACT;
 
-    public AdminServiceimpl(UserMapper userMapper, MsgACT msgACT) {
+    public AdminServiceimpl(UserMapper userMapper, OrderdateMapper orderdateMapper, MsgACT msgACT) {
         this.userMapper = userMapper;
+        this.orderdateMapper = orderdateMapper;
         this.msgACT = msgACT;
     }
 
@@ -149,12 +157,12 @@ public class AdminServiceimpl implements AdminService {
                 UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
                 updateWrapper.eq("name", matcher).set("State", "0");
                 userMapper.update(null, updateWrapper);
-                msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n解冻等级成功");
+                msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n关闭停止晋级成功");
             } else {
-                msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n无需解冻");
+                msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n无需关闭停止晋级");
             }
         } catch (Exception e) {
-            msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n出错了，解冻失败");
+            msgACT.WebApiClient("", message.getFrom_group(), matcher + "\n出错了，关闭停止晋级失败");
         }
         return null;
     }
@@ -164,6 +172,29 @@ public class AdminServiceimpl implements AdminService {
         msgACT.WebApiClient("", message.getFrom_group(), "点击链接下载实时Excel文件\n" +
                 "订单表：http://wxbot.6hu.cc/export/order\n" +
                 "接单员表：http://wxbot.6hu.cc/export/user");
+        return null;
+    }
+
+    @Override
+    public ResponseEntity CancelOrder(Message message) {
+        String regex = "^取消订单：(\\d+)。$"; // 匹配以"取消订单："开头，以"."结尾，中间为数字的字符串
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(message.getMsg());
+        if (matcher.find()) {
+            String result = matcher.group(1); // 正则表达式中用()括号捕获的内容，使用group(1)来获取
+            try {
+                LambdaQueryWrapper<Orderdate> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(Orderdate::getOrderid, result);
+                int reg = orderdateMapper.delete(wrapper);
+                if (reg == 0){
+                    msgACT.WebApiClient("", message.getFrom_group(), "订单：" + result + "\n取消失败");
+                }else {
+                    msgACT.WebApiClient("", message.getFrom_group(), "订单：" + result + "\n取消成功");
+                }
+            } catch (Exception e) {
+                msgACT.WebApiClient("", message.getFrom_group(), "订单：" + result + "\n取消出现报错");
+            }
+        }
         return null;
     }
 }

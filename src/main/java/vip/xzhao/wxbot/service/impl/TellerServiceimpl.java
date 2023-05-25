@@ -50,7 +50,7 @@ public class TellerServiceimpl implements TellerService {
             //判断重复接单
             if (resor == null) {
                 //等级
-                if (message.getMsg().contains("金牌") && res.getGrade().equals("金牌")) {
+                if (message.getMsg().contains("金牌") & res.getGrade().equals("金牌")) {
                     orderdate.setOrderid(orderid);
                     orderdate.setName(res.getName());
                     orderdate.setDate(currentDateTime);
@@ -59,7 +59,7 @@ public class TellerServiceimpl implements TellerService {
                     orderdateMapper.insert(orderdate);
                     msgACT.WebApiClient("", message.getFrom_group(), "订单:" + orderid + "\n" +
                             res.getName() + "接单成功");
-                } else if (message.getMsg().contains("正式") && res.getGrade().equals("正式")) {
+                } else if (message.getMsg().contains("正式") & res.getGrade().equals("正式")) {
                     orderdate.setOrderid(orderid);
                     orderdate.setName(res.getName());
                     orderdate.setDate(currentDateTime);
@@ -68,16 +68,7 @@ public class TellerServiceimpl implements TellerService {
                     orderdateMapper.insert(orderdate);
                     msgACT.WebApiClient("", message.getFrom_group(), "订单:" + orderid + "\n" +
                             res.getName() + "接单成功");
-                } else if (message.getMsg().contains("见习") && res.getGrade().equals("见习")) {
-                    orderdate.setOrderid(orderid);
-                    orderdate.setName(res.getName());
-                    orderdate.setDate(currentDateTime);
-                    orderdate.setGrade(res.getGrade());
-                    orderdate.setWxid(message.getFrom_wxid());
-                    orderdateMapper.insert(orderdate);
-                    msgACT.WebApiClient("", message.getFrom_group(), "订单:" + orderid + "\n" +
-                            res.getName() + "接单成功");
-                } else if (message.getMsg().contains("转单") && res.getGrade().equals("见习")) {
+                } else if (message.getMsg().contains("见习") & res.getGrade().equals("见习")) {
                     orderdate.setOrderid(orderid);
                     orderdate.setName(res.getName());
                     orderdate.setDate(currentDateTime);
@@ -91,6 +82,21 @@ public class TellerServiceimpl implements TellerService {
                             orderid + "\n" +
                             res.getName() +
                             "接单失败" +
+                            "\n你的等级是：" + res.getGrade() +
+                            "\n不符合接单等级");
+                }
+            }if (message.getMsg().contains("转单")){
+                if (resor.getGrade().equals(res.getGrade())){
+                    UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+                    updateWrapper.eq("orderid", orderid).set("name", res.getName());
+                    userMapper.update(null, updateWrapper);
+                    msgACT.WebApiClient("", message.getFrom_group(), "订单:" + orderid + "\n" +
+                            res.getName() + "接转单成功");
+                }else {
+                    msgACT.WebApiClient("", message.getFrom_group(), "订单:" +
+                            orderid + "\n" +
+                            res.getName() +
+                            "接转单失败" +
                             "\n你的等级是：" + res.getGrade() +
                             "\n不符合接单等级");
                 }
@@ -189,10 +195,10 @@ public class TellerServiceimpl implements TellerService {
                 "[小高]+/-/=电池100\n" +
                 "停止晋级：\n" +
                 "[小高]停止晋级\n" +
-                "解冻等级：\n" +
-                "[小高]解冻等级\n" +
+                "关闭停止晋级：\n" +
+                "[小高]关闭停止晋级\n" +
                 "取消订单：\n" +
-                "取消订单：订单号\n" +
+                "取消订单：12346。\n" +
                 "\n" +
                 "下载实时数据\n" +
                 "刷新等级");
