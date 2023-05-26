@@ -101,18 +101,18 @@ public class AdminServiceimpl implements AdminService {
     @Override
     public ResponseEntity updateGradeByBattery(String GroupId) {
         try {
-        // 构造查询条件
-        QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
-        queryWrapper.lambda().eq(Userdate::getState, 0);
-        // 构造更新值和更新条件
-        UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.lambda().eq(Userdate::getState, 0).setSql("grade = " +
-                "case when battery <= 29 then '见习' " +
-                "when battery >= 30 and battery <= 149 then '正式' " +
-                "else '金牌' end");
-        // 更新数据库
-        userMapper.update(null, updateWrapper);
-        msgACT.WebApiClient("", GroupId, "全部接单员等级刷新成功");
+            // 构造查询条件
+            QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
+            queryWrapper.lambda().eq(Userdate::getState, 0);
+            // 构造更新值和更新条件
+            UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.lambda().eq(Userdate::getState, 0).setSql("grade = " +
+                    "case when battery <= 29 then '见习' " +
+                    "when battery >= 30 and battery <= 149 then '正式' " +
+                    "else '金牌' end");
+            // 更新数据库
+            userMapper.update(null, updateWrapper);
+            msgACT.WebApiClient("", GroupId, "全部接单员等级刷新成功");
         } catch (Exception e) {
             msgACT.WebApiClient("", GroupId, "等级刷新失败，呜呜");
         }
@@ -125,7 +125,7 @@ public class AdminServiceimpl implements AdminService {
             //正式
             UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
             updateWrapper.lambda().eq(Userdate::getState, 1)
-                    .eq(Userdate::getGrade,"正式")
+                    .eq(Userdate::getGrade, "正式")
                     .le(Userdate::getBattery, 29) //电量小于等于29
                     .set(Userdate::getGrade, "见习"); //更新为“见习”
             int rowsA = userMapper.update(null, updateWrapper);
@@ -138,7 +138,7 @@ public class AdminServiceimpl implements AdminService {
             int rowsB = userMapper.update(null, updateWrapperA);
 
             msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新成功\n" +
-                   rowsB + "个金牌降到了正式\n" + rowsA +  "个正式降到了见习");
+                    rowsB + "个金牌降到了正式\n" + rowsA + "个正式降到了见习");
         } catch (Exception e) {
             msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新失败，呜呜");
         }
@@ -212,9 +212,9 @@ public class AdminServiceimpl implements AdminService {
                 LambdaQueryWrapper<Orderdate> wrapper = new LambdaQueryWrapper<>();
                 wrapper.eq(Orderdate::getOrderid, result);
                 int reg = orderdateMapper.delete(wrapper);
-                if (reg == 0){
+                if (reg == 0) {
                     msgACT.WebApiClient("", message.getFrom_group(), "订单：" + result + "\n取消失败");
-                }else {
+                } else {
                     msgACT.WebApiClient("", message.getFrom_group(), "订单：" + result + "\n取消成功");
                 }
             } catch (Exception e) {

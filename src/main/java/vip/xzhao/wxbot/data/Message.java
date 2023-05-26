@@ -23,9 +23,17 @@ public class Message {
      */
     private String from_group_name;
     /**
+     * 消息所在群的群名 2
+     */
+    private String to_name;
+    /**
      * 发送消息人的wxid
      */
     private String from_wxid;
+    /**
+     * 发送消息人的wxid 2
+     */
+    private String to_wxid;
     // 发送消息的联系人昵称
     private String from_name;
     /**

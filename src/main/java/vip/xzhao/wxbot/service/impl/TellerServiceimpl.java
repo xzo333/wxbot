@@ -85,14 +85,15 @@ public class TellerServiceimpl implements TellerService {
                             "\n你的等级是：" + res.getGrade() +
                             "\n不符合接单等级");
                 }
-            }if (message.getMsg().contains("转单")){
-                if (resor.getGrade().equals(res.getGrade())){
+            }
+            if (message.getMsg().contains("转单")) {
+                if (resor.getGrade().equals(res.getGrade())) {
                     UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
                     updateWrapper.eq("orderid", orderid).set("name", res.getName());
                     userMapper.update(null, updateWrapper);
                     msgACT.WebApiClient("", message.getFrom_group(), "订单:" + orderid + "\n" +
                             res.getName() + "接转单成功");
-                }else {
+                } else {
                     msgACT.WebApiClient("", message.getFrom_group(), "订单:" +
                             orderid + "\n" +
                             res.getName() +
@@ -119,7 +120,7 @@ public class TellerServiceimpl implements TellerService {
         String str = message.getMsg();
         //昵称
         String nickname = str.substring(str.indexOf("：") + 1, str.length() - 1);
-        System.out.println(nickname);
+        //System.out.println(nickname);
         if (res == null) {
             userdate.setWxid(message.getFrom_wxid());
             userdate.setName(nickname);
