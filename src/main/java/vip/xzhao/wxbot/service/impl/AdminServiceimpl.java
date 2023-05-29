@@ -108,7 +108,7 @@ public class AdminServiceimpl implements AdminService {
             UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
             updateWrapper.lambda().eq(Userdate::getState, 0).setSql("grade = " +
                     "case when battery <= 29 then '见习' " +
-                    "when battery >= 30 and battery <= 149 then '正式' " +
+                    "when battery >= 30 and battery <= 179 then '正式' " +
                     "else '金牌' end");
             // 更新数据库
             userMapper.update(null, updateWrapper);
@@ -133,7 +133,7 @@ public class AdminServiceimpl implements AdminService {
             UpdateWrapper<Userdate> updateWrapperA = new UpdateWrapper<>();
             updateWrapperA.lambda().eq(Userdate::getState, 1)
                     .eq(Userdate::getGrade, "金牌")
-                    .between(Userdate::getBattery, 30, 149) //电量介于30到149之间
+                    .between(Userdate::getBattery, 30, 179) //电量介于30到149之间
                     .set(Userdate::getGrade, "正式"); //更新为“正式”
             int rowsB = userMapper.update(null, updateWrapperA);
 
