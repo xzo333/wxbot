@@ -193,7 +193,7 @@ public class TellerServiceimpl implements TellerService {
                 "\n" +
                 "【管理员】\n" +
                 "修改电池：\n" +
-                "[小高]+/-/=电池100\n" +
+                "，小高+100，落花-100\n" +
                 "停止晋级：\n" +
                 "[小高]停止晋级\n" +
                 "关闭停止晋级：\n" +

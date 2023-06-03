@@ -33,7 +33,7 @@ public class BuckleBattery {
                     userMapper.updateById(userdate);
                 }
             }
-            msgACT.WebApiClient("", GroupId, "每日减1电池执行成功");
+            //msgACT.WebApiClient("", GroupId, "每日减1电池执行成功");
             adminService.updateGradeByBattery(GroupId);
             Thread.sleep(3000); // 将当前线程睡眠 3 秒钟
             adminService.RefreshStopPromotionLevel(GroupId);

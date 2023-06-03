@@ -3,6 +3,7 @@ package vip.xzhao.wxbot.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
@@ -16,6 +17,7 @@ import vip.xzhao.wxbot.service.AdminService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 @Service
 public class AdminServiceimpl implements AdminService {
     public final UserMapper userMapper;
@@ -32,18 +34,27 @@ public class AdminServiceimpl implements AdminService {
     public ResponseEntity ModifyBattery(Message message) {
         //信息
         String text = message.getMsg();
-        //加电池昵称
+        log.info("加减电池收到消息：" + text);
+        /*//加电池昵称
         String name = text.substring(text.indexOf("[") + 1, text.indexOf("]")); // 获取[]中的名字部分，即"小高"
         //电池数
         Long number = Long.valueOf(text.replaceAll("[^0-9]", "")); // 替换除了数字以外的所有字符，即"100"
-        //System.out.println("昵称：" + name + "，电池：" + number);
+        //System.out.println("昵称：" + name + "，电池：" + number);*/
+        //Pattern pattern = Pattern.compile("，(\\S+)([\\+\\-=])(\\d+)");
+        Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)([\\+\\-=])(\\d+)");
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            String name = matcher.group(1);
+            String op = matcher.group(2);
+            int number = Integer.parseInt(matcher.group(3));
+            log.info("Match: jname=" + name + ", op=" + op + ", num=" + number);
         //数据库
         try {
             QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
             queryWrapper.lambda().eq(Userdate::getName, name);
             Userdate res = userMapper.selectOne(queryWrapper);
             UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
-            if (text.contains("+")) {
+            if (op.equals("+")) {
                 // 处理电池加上数字的情况
                 try {
                     long t = res.getBattery() + number;
@@ -60,7 +71,7 @@ public class AdminServiceimpl implements AdminService {
                     msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                             "\n加电池失败");
                 }
-            } else if (text.contains("-")) {
+            } else if (op.equals("-")) {
                 // 处理电池减去数字的情况
                 try {
                     long t = res.getBattery() - number;
@@ -76,7 +87,7 @@ public class AdminServiceimpl implements AdminService {
                     msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                             "\n减电池失败");
                 }
-            } else if (text.contains("=")) {
+            } else if (op.equals("=")) {
                 // 处理电池=数字
                 try {
                     updateWrapper.eq("name", name).set("battery", number).set("historicalbattery", number);
@@ -95,6 +106,7 @@ public class AdminServiceimpl implements AdminService {
             msgACT.WebApiClient("", message.getFrom_group(), name +
                     "\n修改电池失败\n没有这个昵称");
         }
+        }
         return null;
     }
 
@@ -112,7 +124,7 @@ public class AdminServiceimpl implements AdminService {
                     "else '金牌' end");
             // 更新数据库
             userMapper.update(null, updateWrapper);
-            msgACT.WebApiClient("", GroupId, "全部接单员等级刷新成功");
+            //msgACT.WebApiClient("", GroupId, "全部接单员等级刷新成功");
         } catch (Exception e) {
             msgACT.WebApiClient("", GroupId, "等级刷新失败，呜呜");
         }
@@ -137,8 +149,7 @@ public class AdminServiceimpl implements AdminService {
                     .set(Userdate::getGrade, "正式"); //更新为“正式”
             int rowsB = userMapper.update(null, updateWrapperA);
 
-            msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新成功\n" +
-                    rowsB + "个金牌降到了正式\n" + rowsA + "个正式降到了见习");
+            //msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新成功\n" + rowsB + "个金牌降到了正式\n" + rowsA + "个正式降到了见习");
         } catch (Exception e) {
             msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新失败，呜呜");
         }

@@ -89,7 +89,10 @@ public class MessageServiceImpl implements MessageService {
                     message.getFrom_wxid().equals("25984983585997042@openim") |
                     message.getFrom_wxid().equals("25984985225681406@openim")) {
                 //=-电池,指定管理员
-                if (Pattern.matches("^\\[.+\\][+\\-=]电池\\s*(\\d+)", message.getMsg())) {
+               /* if (Pattern.matches("^\\[.+\\][+\\-=]电池\\s*(\\d+)", message.getMsg())) {
+                    adminService.ModifyBattery(message);
+                }*/
+                if (message.getMsg().matches("^，.*")) {
                     adminService.ModifyBattery(message);
                 }
                 //取消订单
