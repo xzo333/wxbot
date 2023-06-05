@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
 import vip.xzhao.wxbot.data.Message;
 import vip.xzhao.wxbot.service.AdminService;
+import vip.xzhao.wxbot.service.AiService;
 import vip.xzhao.wxbot.service.MessageService;
 import vip.xzhao.wxbot.service.TellerService;
 
@@ -18,16 +19,18 @@ public class MessageServiceImpl implements MessageService {
     public final MsgACT msgACT;
     private final TellerService tellerService;
     private final AdminService adminService;
+    private final AiService aiService;
     @Value("${robot.groupid}")
     private String GroupId;
     @Value("${robot.groupidA}")
     private String GroupIdA;
     @Value("${robot.groupidB}")
     private String GroupIdB;
-    public MessageServiceImpl(MsgACT msgACT, TellerService tellerService, AdminService adminService) {
+    public MessageServiceImpl(MsgACT msgACT, TellerService tellerService, AdminService adminService, AiService aiService) {
         this.msgACT = msgACT;
         this.tellerService = tellerService;
         this.adminService = adminService;
+        this.aiService = aiService;
     }
 
     @Override
@@ -37,6 +40,7 @@ public class MessageServiceImpl implements MessageService {
         //只有指定群才回复
         if (message.getFrom_group().equals(GroupIdA) | message.getFrom_group().equals(GroupIdB)) {
             //System.out.println("收到：" + message);
+            String Msg = message.getMsg();
             //接单,识别是接单
             if (message.getMsg().contains("@") & message.getMsg().contains("接单") &
                     message.getMsg().contains("------")& message.getMsg().contains("订单号：")) {
@@ -75,6 +79,11 @@ public class MessageServiceImpl implements MessageService {
             //导出下载
             if (message.getMsg().equals("下载实时数据")) {
                 adminService.DownloadRealTimeData(message);
+            }
+
+            //Ai
+            if (Msg.toLowerCase().startsWith("ai")) {
+                aiService.Ai(message);
             }
 
             //管理员
