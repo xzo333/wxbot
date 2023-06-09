@@ -1,5 +1,6 @@
 package vip.xzhao.wxbot.data;
 
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
 
 import java.util.Map;
@@ -9,18 +10,27 @@ public class AIdate {
     /**
      * 信息
      */
+    @JSONField(ordinal = 1)
     private String prompt;
-    private String options;
     /**
-     * #/chat/1685771238319\
+     * ID
      */
+    @JSONField(ordinal = 2)
     private String userId;
-    private String usingContext;
     /**
      * 网络
      */
-    private String network;
-    private String stream;
+    @JSONField(ordinal = 3)
+    private boolean network = false; // 将属性的默认值设为 false
+
+    @JSONField(ordinal = 4)
     private String system;
-    private String withoutContext;
+    @JSONField(ordinal = 5)
+    private boolean withoutContext = false; // 将属性的默认值设为 false
+    @JSONField(ordinal = 6)
+    private boolean stream = false; // 将属性的默认值设为 false
+/*    private String options;
+
+    private String usingContext;*/
+
 }

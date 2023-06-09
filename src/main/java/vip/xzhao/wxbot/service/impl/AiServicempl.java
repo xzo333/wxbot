@@ -25,18 +25,24 @@ public class AiServicempl implements AiService {
     public String Ai(Message message) {
         String Msg = message.getMsg();
         Msg = Msg.substring(2);  // 删除开头的 "ai"
+        Msg = Msg.replace("小高", "binjie09");
 
         //根据wiid上下文进行互动
         String wxid = message.getFrom_wxid();
         long num = Long.parseLong(wxid.substring(0, wxid.indexOf("@")));  // 直接获取数字部分并转换为long类型
-        String UserId = "#/chat/" + num;
-        String aimsg = msgAi.ai(Msg,UserId);
+        String Userid = "#/chat/" + num;
+        //String Userid = "#/chat/1686278473578";
+        String aimsg = msgAi.ai(Msg,Userid);
         String newStr = aimsg.replace("binjie09", "小高");
+        String groupid = message.getFrom_group();
+        if (message.getFrom_group() == null){
+            groupid = message.getFrom_wxid();
+        }
         //获取昵称
         try {
             Userdate res = userMapper.selectOne(new QueryWrapper<Userdate>().lambda().eq(Userdate::getWxid, wxid));
             String name = res.getName();
-            msgACT.WebApiClient("", message.getFrom_group(), name + "\n" + newStr);
+            msgACT.WebApiClient("", groupid, name + "\n" + newStr);
            } catch (Exception e) {
             msgACT.WebApiClient("", message.getFrom_group(), "使用Ai，需要先设置昵称");
         }

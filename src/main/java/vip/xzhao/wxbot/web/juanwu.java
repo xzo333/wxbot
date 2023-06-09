@@ -21,14 +21,13 @@ public class Juanwu {
 
     @PostMapping("/juanwu/msg")
     public ResponseEntity<String> receivePost(@RequestHeader MultiValueMap<String, String> headers, @RequestBody String requestBody) {
-        log.error("接收到请求头: {}", headers);
+        log.debug("接收到请求头: {}", headers);
         try {
             JSONObject txt = JSONObject.parseObject(requestBody);
-            log.error("接收到数据: {}", txt);
+            log.debug("接收到数据: {}", txt);
         } catch (Exception e) {
             log.error("使用阿里巴巴JSON报错: {}", e.getMessage(), e);
         }
-
 
         try {
             Message message = JSONObject.parseObject(requestBody, Message.class);

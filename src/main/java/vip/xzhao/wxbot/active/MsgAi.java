@@ -17,9 +17,9 @@ public class MsgAi {
     private static final MediaType JSON_TYPE = MediaType.get("application/json; charset=utf-8");
     private static final String URL = "https://api.binjie.fun/api/generateStream";
     private static final String REFERER = "https://chat7.aichatos.xyz/";
-    private static final String ORIGIN = "https://chat7.aichatos.xyz/";
+    private static final String ORIGIN = "https://chat7.aichatos.xyz";
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
-    private static final int TIMEOUT_SECONDS = 3;
+    private static final int TIMEOUT_SECONDS = 5;
 
     private static OkHttpClient createOkHttpClient() {
         return new OkHttpClient.Builder()
@@ -31,20 +31,23 @@ public class MsgAi {
 
     public String ai(String msg, String userId) {
         AIdate info = new AIdate();
-        /*{"prompt":"测试","userId":"#/chat/1685956212295","network":false,"system":"","withoutContext":false,"stream":false}*/
         info.setPrompt(msg);
         info.setUserId(userId);
-        info.setNetwork("false");
+        info.setNetwork(true); // 设置为 true
         info.setSystem("");
-        info.setWithoutContext("false");
-        info.setStream("false");
+        info.setWithoutContext(false);
+        info.setStream(false);
 
         String json = JSON.toJSONString(info);
-        log.info("请求内容转化为Json：" + json);
+        log.info("Ai请求内容转化为Json：" + json);
 
         RequestBody body = RequestBody.create(JSON_TYPE, json);
         Request request = new Request.Builder()
                 .url(URL)
+                .header("Content-Type", "application/json")
+                .header("Accept", "*/*")
+                .header("Host", "api.binjie.fun")
+                .header("Connection", "keep-alive")
                 .header("Referer", REFERER)
                 .header("Origin", ORIGIN) // 增加 Origin 请求头
                 .header("User-Agent", USER_AGENT)
