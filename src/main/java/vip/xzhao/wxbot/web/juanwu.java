@@ -14,9 +14,23 @@ import java.util.Map;
 @RestController
 public class Juanwu {
     private final MessageService messageService;
+    private final AsyncService asyncService;
 
-    public Juanwu(MessageService messageService) {
+    public Juanwu(MessageService messageService, AsyncService asyncService) {
         this.messageService = messageService;
+        this.asyncService = asyncService;
+    }
+    //测试
+    @PostMapping("/msg")
+    public ResponseEntity<String> TestReceivePost(@RequestHeader MultiValueMap<String, String> headers, @RequestBody String requestBody) {
+        log.error("接收到请求头: {}", headers);
+        try {
+            JSONObject txt = JSONObject.parseObject(requestBody);
+            log.error("接收到数据: {}", txt);
+        } catch (Exception e) {
+            log.error("使用阿里巴巴JSON报错: {}", e.getMessage(), e);
+        }
+        return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 
     @PostMapping("/juanwu/msg")
@@ -31,6 +45,7 @@ public class Juanwu {
 
         try {
             Message message = JSONObject.parseObject(requestBody, Message.class);
+            asyncService.sendToAnotherApi(message); // 异步发送数据到另一个接口
             messageService.handleGroupMsg(message);
         } catch (Exception e) {
             log.error("处理JSON报错: {}", e.getMessage(), e);
@@ -38,6 +53,7 @@ public class Juanwu {
         }
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
+
 
     @GetMapping("/juanwu/msg")
     public ResponseEntity<String> receiveGet(@RequestParam Map<String, String> params) {

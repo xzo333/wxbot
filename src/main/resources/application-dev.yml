@@ -7,7 +7,7 @@ spring:
     password: 123456
 
 server:
-  port: 8080
+  port: 1397
 robot:
   groupid: 48408656825@chatroom #测试群
   groupidA: 43209303317@chatroom #闲聊群

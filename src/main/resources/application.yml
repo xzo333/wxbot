@@ -1,4 +1,3 @@
 spring:
   profiles:
-    # 打包会自动使用application-pro的配置
     active: pro
