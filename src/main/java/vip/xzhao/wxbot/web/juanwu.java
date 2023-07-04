@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import vip.xzhao.wxbot.active.MsgACT;
 import vip.xzhao.wxbot.data.Message;
 import vip.xzhao.wxbot.service.MessageService;
 import java.util.Map;
@@ -16,16 +17,18 @@ public class Juanwu {
     private final MessageService messageService;
     private final AsyncService asyncService;
 
-    public Juanwu(MessageService messageService, AsyncService asyncService) {
+    public Juanwu(MessageService messageService, AsyncService asyncService, MsgACT msgACT) {
         this.messageService = messageService;
         this.asyncService = asyncService;
     }
     //测试
-    @PostMapping("/msg")
+    @PostMapping("/msg/test")
     public ResponseEntity<String> TestReceivePost(@RequestHeader MultiValueMap<String, String> headers, @RequestBody String requestBody) {
-        log.error("接收到请求头: {}", headers);
+        //log.error("接收到请求头: {}", headers);
         try {
             JSONObject txt = JSONObject.parseObject(requestBody);
+            Message message = JSONObject.parseObject(requestBody, Message.class);
+            //messageService.handleGroupMsg(message);
             log.error("接收到数据: {}", txt);
         } catch (Exception e) {
             log.error("使用阿里巴巴JSON报错: {}", e.getMessage(), e);
@@ -35,7 +38,7 @@ public class Juanwu {
 
     @PostMapping("/juanwu/msg")
     public ResponseEntity<String> receivePost(@RequestHeader MultiValueMap<String, String> headers, @RequestBody String requestBody) {
-        log.debug("接收到请求头: {}", headers);
+        //log.debug("接收到请求头: {}", headers);
         try {
             JSONObject txt = JSONObject.parseObject(requestBody);
             log.debug("接收到数据: {}", txt);
@@ -53,7 +56,6 @@ public class Juanwu {
         }
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
-
 
     @GetMapping("/juanwu/msg")
     public ResponseEntity<String> receiveGet(@RequestParam Map<String, String> params) {

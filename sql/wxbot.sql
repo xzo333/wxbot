@@ -11,7 +11,7 @@
  Target Server Version : 101103 (10.11.3-MariaDB)
  File Encoding         : 65001
 
- Date: 25/05/2023 18:35:45
+ Date: 04/07/2023 10:53:55
 */
 
 SET NAMES utf8mb4;
@@ -29,7 +29,7 @@ CREATE TABLE `orderdate`  (
   `grade` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '等级',
   `wxid` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT 'wxid',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for userdate
@@ -43,7 +43,9 @@ CREATE TABLE `userdate`  (
   `historicalbattery` int(10) NULL DEFAULT NULL COMMENT '历史电池',
   `state` int(2) NULL DEFAULT NULL COMMENT '状态冻结等级',
   `wxid` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'wxid',
+  `continuation` int(10) NULL DEFAULT NULL COMMENT '续单数',
+  `numberoforders` int(10) NULL DEFAULT NULL COMMENT '接单数',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 24 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 185 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

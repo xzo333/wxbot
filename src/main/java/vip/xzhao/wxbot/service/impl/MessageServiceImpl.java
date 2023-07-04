@@ -1,17 +1,16 @@
 package vip.xzhao.wxbot.service.impl;
 
-import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
 import vip.xzhao.wxbot.data.Message;
-import vip.xzhao.wxbot.service.AdminService;
-import vip.xzhao.wxbot.service.AiService;
-import vip.xzhao.wxbot.service.MessageService;
-import vip.xzhao.wxbot.service.TellerService;
+import vip.xzhao.wxbot.service.*;
+import vip.xzhao.wxbot.util.WxRobot;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,23 +22,36 @@ public class MessageServiceImpl implements MessageService {
     private final TellerService tellerService;
     private final AdminService adminService;
     private final AiService aiService;
-    @Value("${robot.groupid}")
-    private String GroupId;
+    private final DispatchService dispatchService;
+
+    private final WxRobot wxRobot;
+    @Value("${robot.groupidTest}")
+    private String groupidTest;
     @Value("${robot.groupidA}")
     private String GroupIdA;
     @Value("${robot.groupidB}")
     private String GroupIdB;
-    public MessageServiceImpl(MsgACT msgACT, TellerService tellerService, AdminService adminService, AiService aiService) {
+
+    @Value("${robot.dispatchGroup}")
+    private String dispatchGroup;
+
+    public MessageServiceImpl(MsgACT msgACT, TellerService tellerService, AdminService adminService, AiService aiService, DispatchService dispatchService, WxRobot wxRobot) {
         this.msgACT = msgACT;
         this.tellerService = tellerService;
         this.adminService = adminService;
         this.aiService = aiService;
+        this.dispatchService = dispatchService;
+        this.wxRobot = wxRobot;
     }
 
 
     @Override
     public ResponseEntity handleGroupMsg(Message message) {
         String groupid = message.getFrom_group();
+        //获取派单群
+        String[] dispatchgroup = dispatchGroup.split(",");
+        List<String> dispatchList = Arrays.asList(dispatchgroup);
+
         /*System.out.println("信息：" + message.getMsg());
         System.out.println("群id" + message.getFrom_group());*/
         //私发测试
@@ -50,14 +62,16 @@ public class MessageServiceImpl implements MessageService {
         }
         //只有指定群才回复
         if (groupid != null) {
-            if (groupid.equals(GroupIdA) | groupid.equals(GroupIdB)) {
+            String Msg = message.getMsg();
+            if (Msg.equals("查看负电池")) {
+                wxRobot.sendToAnotherApi(message);//数据发送到接口
+            } else if (groupid.equals(GroupIdA) | groupid.equals(GroupIdB)) {
                 //System.out.println("收到：" + message);
-                String Msg = message.getMsg();
                 //接单,识别是接单
-                if (message.getMsg().contains("@") & message.getMsg().contains("接单") &
+                /*if (message.getMsg().contains("@") & message.getMsg().contains("接单") &
                         message.getMsg().contains("------") & message.getMsg().contains("订单号：")) {
                     tellerService.Order(message);
-                }
+                }*/
                 //查看电池
                 if (message.getMsg().equals("查看电池")) {
                     tellerService.ViewBattery(message);
@@ -111,11 +125,12 @@ public class MessageServiceImpl implements MessageService {
                         message.getFrom_wxid().equals("25984983585997042@openim") |
                         message.getFrom_wxid().equals("25984985225681406@openim")) {
                     //=-电池,指定管理员
-               /* if (Pattern.matches("^\\[.+\\][+\\-=]电池\\s*(\\d+)", message.getMsg())) {
-                    adminService.ModifyBattery(message);
-                }*/
-                    if (message.getMsg().matches("^，.*")) {
+                    if (message.getMsg().matches("^，.*[+\\-=]\\d+") && !message.getMsg().contains("续单")) {
                         adminService.ModifyBattery(message);
+                    }
+                    //加续单
+                    if (Pattern.matches("^，.*续单\\+\\d+", message.getMsg())) {
+                        adminService.modifyContinuedOrderQuantity(message);
                     }
                     //取消订单
                     if (Pattern.matches("^取消订单：(\\d+)。$", message.getMsg())) {
@@ -141,6 +156,10 @@ public class MessageServiceImpl implements MessageService {
                             adminService.ThawLevel(message);
                         }
                     }
+                }
+            } else if (dispatchList.contains(message.getFrom_group())) {//指定派单群才执行
+                if (message.getMsg().equals("派单") | message.getMsg().equals("1")) {
+                    dispatchService.order(message);
                 }
             }
         }

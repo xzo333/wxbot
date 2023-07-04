@@ -14,6 +14,9 @@ import vip.xzhao.wxbot.mapper.OrderdateMapper;
 import vip.xzhao.wxbot.mapper.UserMapper;
 import vip.xzhao.wxbot.service.AdminService;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,64 +51,64 @@ public class AdminServiceimpl implements AdminService {
             String op = matcher.group(2);
             int number = Integer.parseInt(matcher.group(3));
             log.info("Match: jname=" + name + ", op=" + op + ", num=" + number);
-        //数据库
-        try {
-            QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
-            queryWrapper.lambda().eq(Userdate::getName, name);
-            Userdate res = userMapper.selectOne(queryWrapper);
-            UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
-            if (op.equals("+")) {
-                // 处理电池加上数字的情况
-                try {
-                    long t = res.getBattery() + number;
-                    long tt = res.getHistoricalbattery() + number;
-                    updateWrapper.eq("name", name).set("battery", t).set("historicalbattery", tt);
-                    userMapper.update(null, updateWrapper);
-                    msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                            "\n加电池" + number +
-                            "\n现电池:" + t +
-                            "\n原等级:" + res.getGrade() +
-                            "\n卷卷再接再厉");
-                    updateGradeByBattery(message.getFrom_group());
-                } catch (Exception e) {
-                    msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                            "\n加电池失败");
+            //数据库
+            try {
+                QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
+                queryWrapper.lambda().eq(Userdate::getName, name);
+                Userdate res = userMapper.selectOne(queryWrapper);
+                UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+                if (op.equals("+")) {
+                    // 处理电池加上数字的情况
+                    try {
+                        long t = res.getBattery() + number;
+                        long tt = res.getHistoricalbattery() + number;
+                        updateWrapper.eq("name", name).set("battery", t).set("historicalbattery", tt);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n加电池" + number +
+                                "\n现电池:" + t +
+                                "\n原等级:" + res.getGrade() +
+                                "\n卷卷再接再厉");
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n加电池失败");
+                    }
+                } else if (op.equals("-")) {
+                    // 处理电池减去数字的情况
+                    try {
+                        long t = res.getBattery() - number;
+                        updateWrapper.eq("name", name).set("battery", t);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n减电池" + number +
+                                "\n现电池:" + t +
+                                "\n原等级:" + res.getGrade() +
+                                "\n卷卷再接再厉");
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n减电池失败");
+                    }
+                } else if (op.equals("=")) {
+                    // 处理电池=数字
+                    try {
+                        updateWrapper.eq("name", name).set("battery", number).set("historicalbattery", number);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n现电池:" + number +
+                                "\n原等级:" + res.getGrade() +
+                                "\n卷卷再接再厉");
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n修改电池失败");
+                    }
                 }
-            } else if (op.equals("-")) {
-                // 处理电池减去数字的情况
-                try {
-                    long t = res.getBattery() - number;
-                    updateWrapper.eq("name", name).set("battery", t);
-                    userMapper.update(null, updateWrapper);
-                    msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                            "\n减电池" + number +
-                            "\n现电池:" + t +
-                            "\n原等级:" + res.getGrade() +
-                            "\n卷卷再接再厉");
-                    updateGradeByBattery(message.getFrom_group());
-                } catch (Exception e) {
-                    msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                            "\n减电池失败");
-                }
-            } else if (op.equals("=")) {
-                // 处理电池=数字
-                try {
-                    updateWrapper.eq("name", name).set("battery", number).set("historicalbattery", number);
-                    userMapper.update(null, updateWrapper);
-                    msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                            "\n现电池:" + number +
-                            "\n原等级:" + res.getGrade() +
-                            "\n卷卷再接再厉");
-                    updateGradeByBattery(message.getFrom_group());
-                } catch (Exception e) {
-                    msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                            "\n修改电池失败");
-                }
+            } catch (Exception e) {
+                msgACT.WebApiClient("", message.getFrom_group(), name +
+                        "\n修改电池失败\n没有这个昵称");
             }
-        } catch (Exception e) {
-            msgACT.WebApiClient("", message.getFrom_group(), name +
-                    "\n修改电池失败\n没有这个昵称");
-        }
         }
         return null;
     }
@@ -140,16 +143,15 @@ public class AdminServiceimpl implements AdminService {
                     .eq(Userdate::getGrade, "正式")
                     .le(Userdate::getBattery, 29) //电量小于等于29
                     .set(Userdate::getGrade, "见习"); //更新为“见习”
-            int rowsA = userMapper.update(null, updateWrapper);
+            userMapper.update(null, updateWrapper);
             //金牌
             UpdateWrapper<Userdate> updateWrapperA = new UpdateWrapper<>();
             updateWrapperA.lambda().eq(Userdate::getState, 1)
                     .eq(Userdate::getGrade, "金牌")
                     .between(Userdate::getBattery, 30, 179) //电量介于30到149之间
                     .set(Userdate::getGrade, "正式"); //更新为“正式”
-            int rowsB = userMapper.update(null, updateWrapperA);
+            userMapper.update(null, updateWrapperA);
 
-            //msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新成功\n" + rowsB + "个金牌降到了正式\n" + rowsA + "个正式降到了见习");
         } catch (Exception e) {
             msgACT.WebApiClient("", GroupId, "全部停止晋级接单员等级刷新失败，呜呜");
         }
@@ -230,6 +232,46 @@ public class AdminServiceimpl implements AdminService {
                 }
             } catch (Exception e) {
                 msgACT.WebApiClient("", message.getFrom_group(), "订单：" + result + "\n取消出现报错");
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public ResponseEntity modifyContinuedOrderQuantity(Message message) {
+        String str = message.getMsg();
+        log.error("修改续单收到消息；" + str);
+        Pattern pattern = Pattern.compile("^，(.*?)续单\\+(\\d+)");
+        Matcher matcher = pattern.matcher(str);
+        if (matcher.find()) {
+            String name = matcher.group(1);  // 逗号后的文本和续单之前的昵称
+            long num = Long.parseLong(matcher.group(2));                    // 续单+后的数字
+            log.error("昵称: " + name);
+            log.error("续单+: " + num);
+            try {
+                QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
+                queryWrapper.lambda().eq(Userdate::getName, name);
+                Userdate res = userMapper.selectOne(queryWrapper);
+                UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+                // 处理电池加上数字的情况
+                long t = Optional.ofNullable(res.getContinuation()).orElse(0L) + Optional.ofNullable(num).orElse(0L);
+                long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L);
+                // 计算百分比
+                BigDecimal tBigDecimal = BigDecimal.valueOf(t);
+                BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
+                BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+
+                updateWrapper.eq("name", name).set("continuation", t);
+                userMapper.update(null, updateWrapper);
+                msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        "\n续单+" + num +
+                        "\n续单总数:" + t +
+                        "\n接单总数:" + tt +
+                        "\n续单率：" + ratio.toPlainString() + "%"
+                );
+            } catch (Exception e) {
+                msgACT.WebApiClient("", message.getFrom_group(), name +
+                        "\n加续单失败");
             }
         }
         return null;

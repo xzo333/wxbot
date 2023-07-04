@@ -16,4 +16,13 @@ public class Userdate {
     private Long battery;
     private Long historicalbattery;
     private Long state;
+    /**
+     * 续单数
+     */
+    private Long continuation;
+    /**
+     * 接单数
+     */
+    private Long numberoforders;
+
 }

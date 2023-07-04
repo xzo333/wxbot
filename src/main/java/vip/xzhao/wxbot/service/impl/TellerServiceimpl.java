@@ -2,6 +2,7 @@ package vip.xzhao.wxbot.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
@@ -13,9 +14,13 @@ import vip.xzhao.wxbot.mapper.UserMapper;
 import vip.xzhao.wxbot.service.TellerService;
 import vip.xzhao.wxbot.util.Order;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
+@Slf4j
 @Service
 public class TellerServiceimpl implements TellerService {
     public final MsgACT msgACT;
@@ -120,7 +125,6 @@ public class TellerServiceimpl implements TellerService {
         String str = message.getMsg();
         //昵称
         String nickname = str.substring(str.indexOf("：") + 1, str.length() - 1);
-        //System.out.println(nickname);
         if (res == null) {
             userdate.setWxid(message.getFrom_wxid());
             userdate.setName(nickname);
@@ -131,27 +135,53 @@ public class TellerServiceimpl implements TellerService {
             userMapper.insert(userdate);
             msgACT.WebApiClient("", message.getFrom_group(), "昵称：" + nickname + "\n等级：见习\n注册成功\n新用户赠送10电池");
         } else {
-            UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<Userdate>()
-                    .eq("wxid", message.getFrom_wxid())
-                    .set("name", nickname);
-            userMapper.update(null, updateWrapper);
-            msgACT.WebApiClient("", message.getFrom_group(), "原昵称：" + res.getName() + "\n修改成\n新昵称：" + nickname + "\n修改成功");
+            if (res.getName().equals("游离态")) {
+                msgACT.WebApiClient("", message.getFrom_group(), "呜呜呜，为啥要改昵称，不改好嘛");
+            } else {
+                UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<Userdate>()
+                        .eq("wxid", message.getFrom_wxid())
+                        .set("name", nickname);
+                userMapper.update(null, updateWrapper);
+                msgACT.WebApiClient("", message.getFrom_group(), "原昵称：" + res.getName() + "\n修改成\n新昵称：" + nickname + "\n修改成功");
+            }
         }
-
         return null;
     }
 
     @Override
-    public ResponseEntity ViewBattery(Message message) {
+    public ResponseEntity  ViewBattery(Message message) {
         try {
             QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
             queryWrapper.lambda().eq(Userdate::getWxid, message.getFrom_wxid());
             Userdate res = userMapper.selectOne(queryWrapper);
-            msgACT.WebApiClient("", message.getFrom_group(), res.getName() + "\n电池：" + res.getBattery() + "\n总电池：" + res.getHistoricalbattery() + "\n等级：" + res.getGrade());
+
+            if (res != null) {
+                BigDecimal t = new BigDecimal(Optional.ofNullable(res.getContinuation()).orElse(0L));
+                BigDecimal tt = new BigDecimal(Optional.ofNullable(res.getNumberoforders()).orElse(0L));
+                BigDecimal ratio = BigDecimal.ZERO;
+
+                if (tt.compareTo(BigDecimal.ZERO) != 0) {
+                    ratio = t.multiply(new BigDecimal("100")).divide(tt, 2, RoundingMode.HALF_UP);
+                }
+
+                msgACT.WebApiClient("", message.getFrom_group(),
+                        res.getName() +
+                                "\n电池：" + res.getBattery() +
+                                "\n总电池：" + res.getHistoricalbattery() +
+                                "\n续单总数：" + t +
+                                "\n接单总数：" + tt +
+                                "\n续单率：" + ratio.toPlainString() + "%" +
+                                "\n等级：" + res.getGrade());
+                return null;
+            } else {
+                msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请先设置昵称");
+                return null;
+            }
         } catch (Exception e) {
-            msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请先设置昵称");
+            log.error("查询电池报错", e);
+            msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请重试");
+            return null;
         }
-        return null;
     }
 
     @Override
@@ -186,7 +216,7 @@ public class TellerServiceimpl implements TellerService {
                 "注册/修改昵称：\n" +
                 "[昵称：小高]\n" +
                 "chatGPT：\n" +
-                "问*问题文字\n" +
+                "Ai问题文字\n" +
                 "\n" +
                 "查看电池\n" +
                 "查看排名\n" +
