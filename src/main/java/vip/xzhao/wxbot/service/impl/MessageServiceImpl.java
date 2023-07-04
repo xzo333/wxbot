@@ -27,10 +27,6 @@ public class MessageServiceImpl implements MessageService {
     private final WxRobot wxRobot;
     @Value("${robot.groupidTest}")
     private String groupidTest;
-    @Value("${robot.groupidA}")
-    private String GroupIdA;
-    @Value("${robot.groupidB}")
-    private String GroupIdB;
 
     @Value("${robot.dispatchGroup}")
     private String dispatchGroup;
@@ -65,13 +61,16 @@ public class MessageServiceImpl implements MessageService {
             String Msg = message.getMsg();
             if (Msg.equals("查看负电池")) {
                 wxRobot.sendToAnotherApi(message);//数据发送到接口
-            } else if (groupid.equals(GroupIdA) | groupid.equals(GroupIdB)) {
+            } else if (dispatchList.contains(message.getFrom_group())) {//指定群才执行
                 //System.out.println("收到：" + message);
                 //接单,识别是接单
                 /*if (message.getMsg().contains("@") & message.getMsg().contains("接单") &
                         message.getMsg().contains("------") & message.getMsg().contains("订单号：")) {
                     tellerService.Order(message);
                 }*/
+                if (message.getMsg().equals("派单") | message.getMsg().equals("1")) {
+                    dispatchService.order(message);
+                }
                 //查看电池
                 if (message.getMsg().equals("查看电池")) {
                     tellerService.ViewBattery(message);
@@ -125,12 +124,18 @@ public class MessageServiceImpl implements MessageService {
                         message.getFrom_wxid().equals("25984983585997042@openim") |
                         message.getFrom_wxid().equals("25984985225681406@openim")) {
                     //=-电池,指定管理员
-                    if (message.getMsg().matches("^，.*[+\\-=]\\d+") && !message.getMsg().contains("续单")) {
+                    if (message.getMsg().matches("^，.*[+\\-=]\\d+") &&
+                            !message.getMsg().contains("续单")&&
+                            !message.getMsg().contains("接单")) {
                         adminService.ModifyBattery(message);
                     }
-                    //加续单
-                    if (Pattern.matches("^，.*续单\\+\\d+", message.getMsg())) {
+                    //修改续单
+                    if (Pattern.matches("^，.*续单[=\\-\\+]\\d+", message.getMsg())) {
                         adminService.modifyContinuedOrderQuantity(message);
+                    }
+                    //修改接单
+                    if (Pattern.matches("^，.*接单[=\\-\\+]\\d+", message.getMsg())) {
+                        adminService.modifyReceipt(message);
                     }
                     //取消订单
                     if (Pattern.matches("^取消订单：(\\d+)。$", message.getMsg())) {
@@ -156,10 +161,6 @@ public class MessageServiceImpl implements MessageService {
                             adminService.ThawLevel(message);
                         }
                     }
-                }
-            } else if (dispatchList.contains(message.getFrom_group())) {//指定派单群才执行
-                if (message.getMsg().equals("派单") | message.getMsg().equals("1")) {
-                    dispatchService.order(message);
                 }
             }
         }

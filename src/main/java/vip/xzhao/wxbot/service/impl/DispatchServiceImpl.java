@@ -39,7 +39,6 @@ public class DispatchServiceImpl implements DispatchService {
 
     @Override
     public ResponseEntity<?> order(Message message) {
-        log.error(String.valueOf(message));
         String content = message.getMsg();
         String groupId = message.getFrom_group();
         String wxid = message.getFrom_wxid();
@@ -79,7 +78,7 @@ public class DispatchServiceImpl implements DispatchService {
     }
 
     private void startCountdown(String groupId) {
-        // 启动一个计时器，3分钟后执行
+        // 启动一个计时器，1分钟后执行
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -88,7 +87,7 @@ public class DispatchServiceImpl implements DispatchService {
                 timers.remove(groupId);  // 清除计时器
                 wxidMap.remove(groupId);  // 清空对应群的已抢单wxid集合,重复接单
             }
-        }, 180000);  // 3分钟
+        }, 60000);  // 1分钟
 
         timers.put(groupId, timer);  // 记录计时器
     }
@@ -164,8 +163,16 @@ public class DispatchServiceImpl implements DispatchService {
                     userMapper.update(null, updateWrapper);
 
                     if (res != null) {
+                        long t = Optional.ofNullable(res.getContinuation()).orElse(0L);
+                        long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L) + 1;
+
                         log.info("续单率最高或最早抢单的是: " + res.getName() + "续单率为：" + formattedRenewalRate);
-                        msgACT.WebApiClient(selectedWxid, groupId, res.getName() + "\n抢单成功，您续单率最高或最早抢单的，续单率为：" + formattedRenewalRate);
+                        msgACT.WebApiClient(selectedWxid, groupId, res.getName() +
+                                "\n接单+1" +
+                                "\n总续单：" + t +
+                                "\n总接单：" + tt +
+                                "\n续单率：" + formattedRenewalRate + "%"
+                        );
                     }
                 } catch (Exception e) {
                     log.error("抢单出现报错" + e);
@@ -179,7 +186,7 @@ public class DispatchServiceImpl implements DispatchService {
             }
         } else {
             log.error("wxidDateMap为空");
-            msgACT.WebApiClient(remindWeChat, groupId, "\n3分钟抢单倒计时结束了，但无人接单");
+            msgACT.WebApiClient(remindWeChat, groupId, "米粒\n无人接单，请及时处理");
         }
     }
 }

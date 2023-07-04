@@ -33,17 +33,17 @@ public class AdminServiceimpl implements AdminService {
         this.msgACT = msgACT;
     }
 
+    /**
+     * 修改电池
+     *
+     * @param message
+     * @return
+     */
     @Override
     public ResponseEntity ModifyBattery(Message message) {
         //信息
         String text = message.getMsg();
         log.info("加减电池收到消息：" + text);
-        /*//加电池昵称
-        String name = text.substring(text.indexOf("[") + 1, text.indexOf("]")); // 获取[]中的名字部分，即"小高"
-        //电池数
-        Long number = Long.valueOf(text.replaceAll("[^0-9]", "")); // 替换除了数字以外的所有字符，即"100"
-        //System.out.println("昵称：" + name + "，电池：" + number);*/
-        //Pattern pattern = Pattern.compile("，(\\S+)([\\+\\-=])(\\d+)");
         Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)([\\+\\-=])(\\d+)");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
@@ -237,41 +237,207 @@ public class AdminServiceimpl implements AdminService {
         return null;
     }
 
+    /**
+     * 修改续单数
+     */
     @Override
     public ResponseEntity modifyContinuedOrderQuantity(Message message) {
-        String str = message.getMsg();
-        log.error("修改续单收到消息；" + str);
-        Pattern pattern = Pattern.compile("^，(.*?)续单\\+(\\d+)");
-        Matcher matcher = pattern.matcher(str);
-        if (matcher.find()) {
-            String name = matcher.group(1);  // 逗号后的文本和续单之前的昵称
-            long num = Long.parseLong(matcher.group(2));                    // 续单+后的数字
-            log.error("昵称: " + name);
-            log.error("续单+: " + num);
+        //信息
+        String text = message.getMsg();
+        log.info("修改续单数收到消息：" + text);
+        Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)(续单)([\\+\\-=])(\\d+)");
+
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            String name = matcher.group(1);
+            String op = matcher.group(3);
+            long number = Long.parseLong(matcher.group(4));
+            log.info("Match: 昵称=" + name + ", 符号=" + op + ", 数量=" + number);
+            //数据库
             try {
                 QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
                 queryWrapper.lambda().eq(Userdate::getName, name);
                 Userdate res = userMapper.selectOne(queryWrapper);
                 UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
-                // 处理电池加上数字的情况
-                long t = Optional.ofNullable(res.getContinuation()).orElse(0L) + Optional.ofNullable(num).orElse(0L);
-                long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L);
-                // 计算百分比
-                BigDecimal tBigDecimal = BigDecimal.valueOf(t);
-                BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
-                BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+                if (op.equals("+")) {
+                    // 处理电池加上数字的情况
+                    try {
+                        // 续单数
+                        long t = Optional.ofNullable(res.getContinuation()).orElse(0L) + Optional.ofNullable(number).orElse(0L);
+                        //接单数
+                        long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L);
+                        // 计算百分比
+                        BigDecimal tBigDecimal = BigDecimal.valueOf(t);
+                        BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
+                        BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
 
-                updateWrapper.eq("name", name).set("continuation", t);
-                userMapper.update(null, updateWrapper);
-                msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                        "\n续单+" + num +
-                        "\n续单总数:" + t +
-                        "\n接单总数:" + tt +
-                        "\n续单率：" + ratio.toPlainString() + "%"
-                );
+                        updateWrapper.eq("name", name).set("numberoforders", tt);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n续单数+" + number +
+                                "\n续单总数:" + t +
+                                "\n接单总数:" + tt +
+                                "\n续单率：" + ratio.toPlainString() + "%"
+                        );
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n加续单失败");
+                    }
+                } else if (op.equals("-")) {
+                    // 处理电池减去数字的情况
+                    // 处理电池加上数字的情况
+                    try {
+                        // 续单数
+                        long t = Optional.ofNullable(res.getContinuation()).orElse(0L) - Optional.ofNullable(number).orElse(0L);
+                        //接单数
+                        long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L);
+                        // 计算百分比
+                        BigDecimal tBigDecimal = BigDecimal.valueOf(t);
+                        BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
+                        BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+
+                        updateWrapper.eq("name", name).set("numberoforders", tt);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n续单数-" + number +
+                                "\n续单总数:" + t +
+                                "\n接单总数:" + tt +
+                                "\n续单率：" + ratio.toPlainString() + "%"
+                        );
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n减续单数失败");
+                    }
+                } else if (op.equals("=")) {
+                    // 处理电池=数字
+                    try {
+                        //接单数
+                        long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L);
+                        // 计算百分比
+                        BigDecimal tBigDecimal = BigDecimal.valueOf(number);
+                        BigDecimal ttBigDecimal = BigDecimal.valueOf(number);
+                        BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+
+                        updateWrapper.eq("name", name).set("numberoforders", number);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n续单数=" + number +
+                                "\n续单总数:" + number +
+                                "\n接单总数:" + number +
+                                "\n续单率：" + ratio.toPlainString() + "%"
+                        );
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n修改续单数失败");
+                    }
+                }
             } catch (Exception e) {
                 msgACT.WebApiClient("", message.getFrom_group(), name +
-                        "\n加续单失败");
+                        "\n修改续单数失败\n没有这个昵称");
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public ResponseEntity modifyReceipt(Message message) {
+        //信息
+        String text = message.getMsg();
+        log.info("修改接单数收到消息：" + text);
+        Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)(接单)([+\\-=])(\\d+)");
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            String name = matcher.group(1);
+            String op = matcher.group(3);
+            long number = Long.parseLong(matcher.group(4));
+            log.info("Match: 昵称=" + name + ", 符号=" + op + ", 数量=" + number);
+            //数据库
+            try {
+                QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
+                queryWrapper.lambda().eq(Userdate::getName, name);
+                Userdate res = userMapper.selectOne(queryWrapper);
+                UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+                if (op.equals("+")) {
+                    // 处理电池加上数字的情况
+                    try {
+                        // 续单数
+                        long t = Optional.ofNullable(res.getContinuation()).orElse(0L);
+                        //接单数
+                        long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L) + Optional.ofNullable(number).orElse(0L);
+                        // 计算百分比
+                        BigDecimal tBigDecimal = BigDecimal.valueOf(t);
+                        BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
+                        BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+
+                        updateWrapper.eq("name", name).set("numberoforders", tt);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n接单数+" + number +
+                                "\n续单总数:" + t +
+                                "\n接单总数:" + tt +
+                                "\n续单率：" + ratio.toPlainString() + "%"
+                        );
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n加接单失败");
+                    }
+                } else if (op.equals("-")) {
+                    // 处理电池减去数字的情况
+                    // 处理电池加上数字的情况
+                    try {
+                        // 续单数
+                        long t = Optional.ofNullable(res.getContinuation()).orElse(0L);
+                        //接单数
+                        long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L) - Optional.ofNullable(number).orElse(0L);
+                        // 计算百分比
+                        BigDecimal tBigDecimal = BigDecimal.valueOf(t);
+                        BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
+                        BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+
+                        updateWrapper.eq("name", name).set("numberoforders", tt);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n接单数-" + number +
+                                "\n续单总数:" + t +
+                                "\n接单总数:" + tt +
+                                "\n续单率：" + ratio.toPlainString() + "%"
+                        );
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n减接单失败");
+                    }
+                } else if (op.equals("=")) {
+                    // 处理电池=数字
+                    try {
+                        // 续单数
+                        long t = Optional.ofNullable(res.getContinuation()).orElse(0L);
+                        // 计算百分比
+                        BigDecimal tBigDecimal = BigDecimal.valueOf(t);
+                        BigDecimal ttBigDecimal = BigDecimal.valueOf(number);
+                        BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
+
+                        updateWrapper.eq("name", name).set("numberoforders", number);
+                        userMapper.update(null, updateWrapper);
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n接单数=" + number +
+                                "\n续单总数:" + t +
+                                "\n接单总数:" + number +
+                                "\n续单率：" + ratio.toPlainString() + "%"
+                        );
+                        updateGradeByBattery(message.getFrom_group());
+                    } catch (Exception e) {
+                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "\n修改接单数失败");
+                    }
+                }
+            } catch (Exception e) {
+                msgACT.WebApiClient("", message.getFrom_group(), name +
+                        "\n修改接单数失败\n没有这个昵称");
             }
         }
         return null;

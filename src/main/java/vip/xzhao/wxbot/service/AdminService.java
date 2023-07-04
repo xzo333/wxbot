@@ -43,5 +43,9 @@ public interface AdminService {
      * 修改续单
      */
     ResponseEntity modifyContinuedOrderQuantity(Message message);
+    /**
+     * 修改接单
+     */
+    ResponseEntity modifyReceipt(Message message);
 
 }

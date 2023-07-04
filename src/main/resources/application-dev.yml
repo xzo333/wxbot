@@ -13,4 +13,5 @@ robot:
   groupidTest: 48408656825@chatroom #测试群
   groupidA: 43209303317@chatroom #闲聊群
   groupidB: 49083670583@chatroom #派单群
-  dispatchGroup: 43113905663@chatroom,47595562713@chatroom,43934705390@chatroom #派单群  金牌、正式、实习
+  dispatchGroup: 43113905663@chatroom,47595562713@chatroom,43934705390@chatroom,43209303317@chatroom,49083670583@chatroom
+  #指定群  金牌、正式、实习、闲聊、派单
