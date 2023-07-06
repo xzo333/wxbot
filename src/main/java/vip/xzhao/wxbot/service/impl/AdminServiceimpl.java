@@ -271,7 +271,7 @@ public class AdminServiceimpl implements AdminService {
                         BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
                         BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
 
-                        updateWrapper.eq("name", name).set("numberoforders", tt);
+                        updateWrapper.eq("name", name).set("continuation", t);
                         userMapper.update(null, updateWrapper);
                         msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n续单数+" + number +
@@ -297,7 +297,7 @@ public class AdminServiceimpl implements AdminService {
                         BigDecimal ttBigDecimal = BigDecimal.valueOf(tt);
                         BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
 
-                        updateWrapper.eq("name", name).set("numberoforders", tt);
+                        updateWrapper.eq("name", name).set("continuation", t);
                         userMapper.update(null, updateWrapper);
                         msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n续单数-" + number +
@@ -311,7 +311,7 @@ public class AdminServiceimpl implements AdminService {
                                 "\n减续单数失败");
                     }
                 } else if (op.equals("=")) {
-                    // 处理电池=数字
+                    // 处理续单=
                     try {
                         //接单数
                         long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L);
@@ -320,12 +320,12 @@ public class AdminServiceimpl implements AdminService {
                         BigDecimal ttBigDecimal = BigDecimal.valueOf(number);
                         BigDecimal ratio = tBigDecimal.multiply(BigDecimal.valueOf(100)).divide(ttBigDecimal, 2, RoundingMode.HALF_UP);
 
-                        updateWrapper.eq("name", name).set("numberoforders", number);
+                        updateWrapper.eq("name", name).set("continuation", number);
                         userMapper.update(null, updateWrapper);
                         msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n续单数=" + number +
                                 "\n续单总数:" + number +
-                                "\n接单总数:" + number +
+                                "\n接单总数:" + tt +
                                 "\n续单率：" + ratio.toPlainString() + "%"
                         );
                         updateGradeByBattery(message.getFrom_group());
@@ -387,7 +387,6 @@ public class AdminServiceimpl implements AdminService {
                     }
                 } else if (op.equals("-")) {
                     // 处理电池减去数字的情况
-                    // 处理电池加上数字的情况
                     try {
                         // 续单数
                         long t = Optional.ofNullable(res.getContinuation()).orElse(0L);

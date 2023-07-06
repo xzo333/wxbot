@@ -132,6 +132,8 @@ public class TellerServiceimpl implements TellerService {
             userdate.setHistoricalbattery(10L);
             userdate.setGrade("见习");
             userdate.setState(0L);
+            userdate.setContinuation(1L);
+            userdate.setNumberoforders(1L);
             userMapper.insert(userdate);
             msgACT.WebApiClient("", message.getFrom_group(), "昵称：" + nickname + "\n等级：见习\n注册成功\n新用户赠送10电池");
         } else {
@@ -167,7 +169,6 @@ public class TellerServiceimpl implements TellerService {
                 msgACT.WebApiClient("", message.getFrom_group(),
                         res.getName() +
                                 "\n电池：" + res.getBattery() +
-                                "\n总电池：" + res.getHistoricalbattery() +
                                 "\n续单总数：" + t +
                                 "\n接单总数：" + tt +
                                 "\n续单率：" + ratio.toPlainString() + "%" +

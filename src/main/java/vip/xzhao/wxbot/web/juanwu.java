@@ -51,7 +51,7 @@ public class Juanwu {
             asyncService.sendToAnotherApi(message); // 异步发送数据到另一个接口
             messageService.handleGroupMsg(message);
         } catch (Exception e) {
-            log.error("处理JSON报错: {}", e.getMessage(), e);
+            log.debug("处理JSON报错: {}", e.getMessage(), e);
             return new ResponseEntity<>("OK", HttpStatus.OK);
         }
         return new ResponseEntity<>("OK", HttpStatus.OK);

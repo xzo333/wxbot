@@ -52,14 +52,14 @@ public class DispatchServiceImpl implements DispatchService {
         }
 
         if (res == null) {
-            msgACT.WebApiClient("", message.getFrom_group(), "请先设置昵称\n格式[昵称：自定义昵称]\n发闲聊群,包含[]\n示范：[昵称：小高]");
+            msgACT.WebApiClient(message.getFrom_wxid(), message.getFrom_group(), "\n请先发注册命令到闲聊群\n才能抢单\n格式[昵称：自定义昵称]\n发闲聊群,包含[]\n示范：[昵称：小高]");
             return null;
         }
 
         if (content.equals("派单")) {
             if (timers.containsKey(groupId)) {
                 // 如果已存在倒计时，给出提示
-                msgACT.WebApiClient(message.getFrom_wxid(), groupId, "\n3分钟抢单倒计时还在进行中，请等待倒计时结束后派新单");
+                msgACT.WebApiClient(message.getFrom_wxid(), groupId, "米粒\n请等待上一单结束后派新单");
             } else {
                 log.error(message.getFrom_group_name() + "群开始派单");
                 startCountdown(groupId); // 启动倒计时
@@ -87,7 +87,7 @@ public class DispatchServiceImpl implements DispatchService {
                 timers.remove(groupId);  // 清除计时器
                 wxidMap.remove(groupId);  // 清空对应群的已抢单wxid集合,重复接单
             }
-        }, 60000);  // 1分钟
+        }, 50000);  // 1分钟
 
         timers.put(groupId, timer);  // 记录计时器
     }
@@ -171,8 +171,7 @@ public class DispatchServiceImpl implements DispatchService {
                                 "\n接单+1" +
                                 "\n总续单：" + t +
                                 "\n总接单：" + tt +
-                                "\n续单率：" + formattedRenewalRate + "%"
-                        );
+                                "\n原续单率：" + formattedRenewalRate);
                     }
                 } catch (Exception e) {
                     log.error("抢单出现报错" + e);
