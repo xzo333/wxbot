@@ -19,7 +19,7 @@ public class AsyncService {
      * @param message 消息体
      */
     @Async
-    public void sendToAnotherApi(Message message) {
+    public void  sendToAnotherApi(Message message) {
         WebClient webClient = WebClient.create(API_URL);
         try {
             webClient.post()

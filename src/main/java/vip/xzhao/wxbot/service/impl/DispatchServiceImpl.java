@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import vip.xzhao.wxbot.active.MsgACT;
+import vip.xzhao.wxbot.active.MsgApi;
 import vip.xzhao.wxbot.data.Message;
 import vip.xzhao.wxbot.data.Userdate;
 import vip.xzhao.wxbot.mapper.UserMapper;
@@ -25,6 +26,8 @@ public class DispatchServiceImpl implements DispatchService {
 
     private static final Map<String, Set<String>> wxidMap = new HashMap<>();  // 记录每个群的已抢单wxid集合
     public final MsgACT msgACT;
+    private final MsgApi msgApi;
+
     public final UserMapper userMapper;
     private final Map<String, Map<String, LocalDateTime>> dateMap = new HashMap<>();//记录抢单群数据
     private final Map<String, Timer> timers = new HashMap<>();//定时记录
@@ -32,8 +35,9 @@ public class DispatchServiceImpl implements DispatchService {
     private String remindWeChat;
     private Map<String, LocalDateTime> wxidDateMap;//记录抢单wxid和日期
 
-    public DispatchServiceImpl(MsgACT msgACT, UserMapper userMapper) {
+    public DispatchServiceImpl(MsgACT msgACT, MsgApi msgApi, UserMapper userMapper) {
         this.msgACT = msgACT;
+        this.msgApi = msgApi;
         this.userMapper = userMapper;
     }
 
@@ -52,14 +56,16 @@ public class DispatchServiceImpl implements DispatchService {
         }
 
         if (res == null) {
-            msgACT.WebApiClient(message.getFrom_wxid(), message.getFrom_group(), "\n请先发注册命令到闲聊群\n才能抢单\n格式[昵称：自定义昵称]\n发闲聊群,包含[]\n示范：[昵称：小高]");
+            String[] atwx = {message.getFrom_wxid()};
+            msgApi.WebApiClient(message.getFrom_group(), "\n请先发注册命令到指令群\n才能抢单\n格式[昵称：自定义昵称]\n示范：[昵称：小高]",atwx);
+            //msgACT.WebApiClient(message.getFrom_wxid(), message.getFrom_group(), "\n请先发注册命令到指令群\n才能抢单\n格式[昵称：自定义昵称]\n示范：[昵称：小高]");
             return null;
         }
 
         if (content.equals("派单")) {
             if (timers.containsKey(groupId)) {
                 // 如果已存在倒计时，给出提示
-                msgACT.WebApiClient(message.getFrom_wxid(), groupId, "米粒\n请等待上一单结束后派新单");
+                msgACT.WebApiClient(message.getFrom_wxid(), groupId, "可夏\n请等待上一单结束后派新单");
             } else {
                 log.error(message.getFrom_group_name() + "群开始派单");
                 startCountdown(groupId); // 启动倒计时
@@ -132,7 +138,9 @@ public class DispatchServiceImpl implements DispatchService {
                     BigDecimal continuation = new BigDecimal(res.getContinuation());
                     BigDecimal totalOrders = new BigDecimal(res.getNumberoforders());
 
-                    renewalRate = continuation.multiply(new BigDecimal(100)).divide(totalOrders, 2, RoundingMode.HALF_UP);
+                    //renewalRate = continuation.multiply(new BigDecimal(100)).divide(totalOrders, 2, RoundingMode.HALF_UP);
+                    renewalRate = continuation.divide(totalOrders, 2, RoundingMode.HALF_UP);
+
                 } else {
                     renewalRate = BigDecimal.ZERO;
                 }
@@ -147,8 +155,12 @@ public class DispatchServiceImpl implements DispatchService {
             }
 
             if (selectedWxid != null) {
+                //订单指数
+                String formattedRenewalRate = String.valueOf(maxRenewalRate);
                 // 输出续单率最高且最早时间的wxid
-                String formattedRenewalRate = maxRenewalRate.setScale(2, RoundingMode.HALF_UP) + "%";
+               /* String formattedRenewalRate = maxRenewalRate.setScale(2, RoundingMode.HALF_UP) + "%";
+                ratio = t.multiply(new BigDecimal("100")).divide(tt, 2, RoundingMode.HALF_UP);*/
+
                 log.error("最终结果：selectedWxid: " + selectedWxid + ", 最高续单率: " + formattedRenewalRate + ", 最早时间: " + earliestDate);
 
                 // 接单成功
@@ -159,7 +171,7 @@ public class DispatchServiceImpl implements DispatchService {
 
                     // 更新订单数量
                     UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
-                    updateWrapper.eq("wxid", selectedWxid).setSql("numberoforders = IFNULL(numberoforders, 0) + 1");
+                    updateWrapper.eq("wxid", selectedWxid).setSql("numberoforders = IFNULL(numberoforders, 0) + 1").setSql("existingorder = IFNULL(existingorder, 0) + 1");
                     userMapper.update(null, updateWrapper);
 
                     if (res != null) {
@@ -168,10 +180,10 @@ public class DispatchServiceImpl implements DispatchService {
 
                         log.info("续单率最高或最早抢单的是: " + res.getName() + "续单率为：" + formattedRenewalRate);
                         msgACT.WebApiClient(selectedWxid, groupId, res.getName() +
-                                "\n接单+1" +
-                                "\n总续单：" + t +
-                                "\n总接单：" + tt +
-                                "\n原续单率：" + formattedRenewalRate);
+                                "\n订单+1" +
+                                "\n权值：" + t +
+                                "\n总订单：" + tt +
+                                "\n原接单指数：" + formattedRenewalRate);
                     }
                 } catch (Exception e) {
                     log.error("抢单出现报错" + e);
@@ -185,7 +197,7 @@ public class DispatchServiceImpl implements DispatchService {
             }
         } else {
             log.error("wxidDateMap为空");
-            msgACT.WebApiClient(remindWeChat, groupId, "米粒\n无人接单，请及时处理");
+            msgACT.WebApiClient(remindWeChat, groupId, "可夏\n无人接单，请及时处理");
         }
     }
 }

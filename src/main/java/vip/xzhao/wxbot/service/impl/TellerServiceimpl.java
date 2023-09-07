@@ -122,7 +122,8 @@ public class TellerServiceimpl implements TellerService {
         queryWrapper.lambda().eq(Userdate::getWxid, message.getFrom_wxid());
         Userdate res = userMapper.selectOne(queryWrapper);
         Userdate userdate = new Userdate();
-        String str = message.getMsg();
+        //String str = message.getMsg();
+        String str = message.getMsg().replace("昵称:", "昵称：");
         //昵称
         String nickname = str.substring(str.indexOf("：") + 1, str.length() - 1);
         if (res == null) {
@@ -130,7 +131,7 @@ public class TellerServiceimpl implements TellerService {
             userdate.setName(nickname);
             userdate.setBattery(10L);
             userdate.setHistoricalbattery(10L);
-            userdate.setGrade("见习");
+            userdate.setGrade("实习");
             userdate.setState(0L);
             userdate.setContinuation(1L);
             userdate.setNumberoforders(1L);
@@ -160,19 +161,24 @@ public class TellerServiceimpl implements TellerService {
             if (res != null) {
                 BigDecimal t = new BigDecimal(Optional.ofNullable(res.getContinuation()).orElse(0L));
                 BigDecimal tt = new BigDecimal(Optional.ofNullable(res.getNumberoforders()).orElse(0L));
+                BigDecimal ttt = new BigDecimal(Optional.ofNullable(res.getExistingorder()).orElse(0L));
                 BigDecimal ratio = BigDecimal.ZERO;
 
                 if (tt.compareTo(BigDecimal.ZERO) != 0) {
-                    ratio = t.multiply(new BigDecimal("100")).divide(tt, 2, RoundingMode.HALF_UP);
+                    //ratio = t.multiply(new BigDecimal("100")).divide(tt, 2, RoundingMode.HALF_UP);
+                     ratio = t.divide(tt, 2, RoundingMode.HALF_UP);
                 }
 
                 msgACT.WebApiClient("", message.getFrom_group(),
                         res.getName() +
+                                "\n等级：" + res.getGrade() +
                                 "\n电池：" + res.getBattery() +
-                                "\n续单总数：" + t +
-                                "\n接单总数：" + tt +
-                                "\n续单率：" + ratio.toPlainString() + "%" +
-                                "\n等级：" + res.getGrade());
+                                "\n权值：" + t +
+                                "\n总订单：" + tt +
+                                "\n接单指数：" + ratio.toPlainString());
+/*
+                                "\n进行中的订单：" + ttt);
+*/
                 return null;
             } else {
                 msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请先设置昵称");
@@ -188,19 +194,20 @@ public class TellerServiceimpl implements TellerService {
     @Override
     public ResponseEntity Ranking(Message message) {
         QueryWrapper<Userdate> wrapper = new QueryWrapper<>();
-        wrapper.select("name", "battery", "grade")
+        wrapper.select("name", "battery", "grade","continuation","numberoforders")
                 .orderByDesc("battery")
                 .last("limit 50");
         List<Userdate> userList = userMapper.selectList(wrapper);
         // 构造要发送的消息
         StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.append("排名前50的接单员：\n");
-        messageBuilder.append("姓名\t电池\t等级\n");  // 列名部分
+        messageBuilder.append("姓名\t电池\t等级\t订单\t权值");  // 列名部分
         for (Userdate user : userList) {
-            messageBuilder.append(user.getName())
+            messageBuilder.append("\n").append(user.getName())
                     .append("\t").append(user.getBattery())
                     .append("\t").append(user.getGrade())
-                    .append("\n");
+                    .append("\t").append(user.getContinuation())
+                    .append("\t").append(user.getNumberoforders());
         }
 
         String messageToSend = messageBuilder.toString();

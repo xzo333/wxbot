@@ -24,5 +24,9 @@ public class Userdate {
      * 接单数
      */
     private Long numberoforders;
+    /**
+     * 已有订单
+     */
+    private Long existingorder;
 
 }

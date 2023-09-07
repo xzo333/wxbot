@@ -47,5 +47,14 @@ public interface AdminService {
      * 修改接单
      */
     ResponseEntity modifyReceipt(Message message);
+    /**
+     * 修改已有订单
+     */
+    ResponseEntity modifyAnExistingOrder(Message message);
+
+    /**
+     * 删监督员
+     */
+    ResponseEntity deleteSupervisor(String name,String group);
 
 }

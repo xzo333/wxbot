@@ -28,7 +28,7 @@ public class Juanwu {
         try {
             JSONObject txt = JSONObject.parseObject(requestBody);
             Message message = JSONObject.parseObject(requestBody, Message.class);
-            //messageService.handleGroupMsg(message);
+            messageService.handleGroupMsg(message);
             log.error("接收到数据: {}", txt);
         } catch (Exception e) {
             log.error("使用阿里巴巴JSON报错: {}", e.getMessage(), e);

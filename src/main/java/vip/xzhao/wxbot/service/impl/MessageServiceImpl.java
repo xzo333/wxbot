@@ -58,8 +58,8 @@ public class MessageServiceImpl implements MessageService {
         }
         //只有指定群才回复
         if (groupid != null) {
-            String Msg = message.getMsg();
-            if (Msg.equals("查看负电池")) {
+            String msg = message.getMsg();
+            if (msg.equals("查看负电池")) {
                 wxRobot.sendToAnotherApi(message);//数据发送到接口
             } else if (dispatchList.contains(message.getFrom_group())) {//指定群才执行
                 //System.out.println("收到：" + message);
@@ -80,8 +80,9 @@ public class MessageServiceImpl implements MessageService {
                     tellerService.Ranking(message);
                 }
                 //设置昵称
+                String msgname = message.getMsg().replace("昵称:", "昵称：");
                 Pattern pattern = Pattern.compile("^\\[昵称：(.+?)\\]$");
-                Matcher matcher = pattern.matcher(message.getMsg());
+                Matcher matcher = pattern.matcher(msgname);
                 if (matcher.matches()) {
                     String nickname = matcher.group(1).trim();
                     if (nickname.matches("^[\\u4e00-\\u9fa5_a-zA-Z0-9]+$")) {
@@ -107,7 +108,7 @@ public class MessageServiceImpl implements MessageService {
                 }
 
                 //Ai
-                if (Msg.toLowerCase().startsWith("ai")) {
+                if (msg.toLowerCase().startsWith("ai")) {
                     log.error("Ai接收到数据: {}", message);
                     aiService.Ai(message);
                 }
@@ -118,28 +119,51 @@ public class MessageServiceImpl implements MessageService {
                 //江月 25984981886553582@openim
                 //小高 25984983585997042@openim
                 //阿凉 25984985225681406@openim
+                //可夏 25984984097635684@openim
+                //可语 25984984433094672@openim
                 if (message.getFrom_wxid().equals("25984984534779134@openim") |
                         message.getFrom_wxid().equals("25984982360415668@openim") |
                         message.getFrom_wxid().equals("25984981886553582@openim") |
                         message.getFrom_wxid().equals("25984983585997042@openim") |
-                        message.getFrom_wxid().equals("25984985225681406@openim")) {
+                        message.getFrom_wxid().equals("25984985225681406@openim") |
+                        message.getFrom_wxid().equals("25984984097635684@openim") |
+                        message.getFrom_wxid().equals("25984984433094672@openim")) {
                     //=-电池,指定管理员
-                    if (message.getMsg().matches("^，.*[+\\-=]\\d+") &&
-                            !message.getMsg().contains("续单")&&
-                            !message.getMsg().contains("接单")) {
+                   /* if (!msg.contains("权值") &&
+                            !msg.contains("订单") &&
+                            !msg.contains("进行中的订单") &&
+                            msg.matches("^，.*[+\\-=]\\d+")) {
                         adminService.ModifyBattery(message);
-                    }
+                    }*/
                     //修改续单
-                    if (Pattern.matches("^，.*续单[=\\-\\+]\\d+", message.getMsg())) {
+                    if (Pattern.matches("^，.*权值[=\\-\\+]\\d+", message.getMsg())) {
                         adminService.modifyContinuedOrderQuantity(message);
                     }
+                    //修改电池
+                    if (Pattern.matches("^，.*电池[=\\-\\+]\\d+", message.getMsg())) {
+                        adminService.ModifyBattery(message);
+                    }
                     //修改接单
-                    if (Pattern.matches("^，.*接单[=\\-\\+]\\d+", message.getMsg())) {
+                    if (Pattern.matches("^，.*订单[=\\-\\+]\\d+", message.getMsg())) {
                         adminService.modifyReceipt(message);
+                    }
+                    //修改已有订单数量
+                    if (Pattern.matches("^，.*进行中的订单[=\\-\\+]\\d+", message.getMsg())) {
+                        adminService.modifyAnExistingOrder(message);
                     }
                     //取消订单
                     if (Pattern.matches("^取消订单：(\\d+)。$", message.getMsg())) {
                         adminService.CancelOrder(message);
+                    }
+                    //删监督员
+                    Pattern deletename = Pattern.compile("^\\[删监督员：(.+?)\\]$");
+                    Matcher deletemsg = deletename.matcher(msgname);
+                    if (deletemsg.matches()) {
+                        String nickname = deletemsg.group(1).trim();
+                        if (nickname.matches("^[\\u4e00-\\u9fa5_a-zA-Z0-9]+$")) {
+                            // 昵称校验通过，执行其他操作
+                            adminService.deleteSupervisor(nickname,message.getFrom_group());
+                        }
                     }
                     //停止晋级
                     Pattern patternA = Pattern.compile("^\\[(.+?)\\]停止晋级$");
