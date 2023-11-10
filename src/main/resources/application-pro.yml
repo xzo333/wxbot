@@ -2,9 +2,9 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/wxbot?serverTimezone=UTC
-    username: wxbot
-    password: mEPxKmNJGNEWxezn
+    url: jdbc:mysql://localhost:3306/xxxxxx?serverTimezone=UTC
+    username: xxxxxx
+    password: xxxxxx
 
 server:
   port: 18080
