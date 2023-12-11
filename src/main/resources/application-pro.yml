@@ -2,15 +2,14 @@ spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
+    #driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://localhost:3306/wxbot?serverTimezone=UTC
     username: wxbot
-    password: mEPxKmNJGNEWxezn
+    password: zEjFa8FfHWAt4P4R
 
 server:
   port: 18080
 robot:
   remindWeChat: 25984984097635684@openim #派单无人接单@微信  米粒 25984982360415668@openim 可夏25984984097635684@openim
-  groupidTest: 48408656825@chatroom #测试群
-  groupidB: 49083670583@chatroom #派单群
   dispatchGroup: 43113905663@chatroom,47595562713@chatroom,43934705390@chatroom,48383963444@chatroom,44802797502@chatroom,43627907595@chatroom,45494982818@chatroom
   #指定群  金牌、正式、实习、派单测试、实习指令群、正式指令群、金牌指令群

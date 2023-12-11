@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface UserdateService {
     List<Userdate> getUserdateList();
+    boolean isadmin(String wxid);
 }

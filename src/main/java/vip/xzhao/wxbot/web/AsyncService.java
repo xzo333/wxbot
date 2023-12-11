@@ -11,7 +11,7 @@ import vip.xzhao.wxbot.data.Message;
 @Service
 public class AsyncService {
 
-    private static final String API_URL = "https://test.wxbot.6hu.cc/msg/test";
+    private static final String API_URL = "http://test.wxbot.6hu.cc/msg/test";
 
     /**
      * 发送数据到另一个接口

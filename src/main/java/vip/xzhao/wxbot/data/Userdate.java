@@ -28,5 +28,8 @@ public class Userdate {
      * 已有订单
      */
     private Long existingorder;
-
+    /**
+     * 管理
+     */
+    private Long isadmin;
 }

@@ -3,13 +3,12 @@ package vip.xzhao.wxbot.util;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
+import vip.xzhao.wxbot.active.MsgApi;
 import vip.xzhao.wxbot.data.Userdate;
 import vip.xzhao.wxbot.mapper.OrderdateMapper;
 import vip.xzhao.wxbot.mapper.UserMapper;
-import vip.xzhao.wxbot.service.AdminService;
 
 @Slf4j
 @Service
@@ -17,16 +16,18 @@ public class ModifyBattery {
     public final UserMapper userMapper;
     public final OrderdateMapper orderdateMapper;
     public final MsgACT msgACT;
+    public final MsgApi msgApi;
 
-    public ModifyBattery(UserMapper userMapper, OrderdateMapper orderdateMapper, MsgACT msgACT) {
+    public ModifyBattery(UserMapper userMapper, OrderdateMapper orderdateMapper, MsgACT msgACT, MsgApi msgApi) {
         this.userMapper = userMapper;
         this.orderdateMapper = orderdateMapper;
         this.msgACT = msgACT;
+        this.msgApi = msgApi;
     }
 
     //权值修改电池
     public String ModifyBattery(String group, String name, String op,Long number) {
-        log.info("修改电池: jname=" + name + ", op=" + op + ", num=" + number);
+        log.info("权值修改电池: jname=" + name + ", op=" + op + ", num=" + number);
         //数据库
         try {
             QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
@@ -40,14 +41,25 @@ public class ModifyBattery {
                     long tt = res.getHistoricalbattery() + number;
                     updateWrapper.eq("name", name).set("battery", t).set("historicalbattery", tt);
                     userMapper.update(null, updateWrapper);
-                    msgACT.WebApiClient("", group, res.getName() +
+                    /*msgACT.WebApiClient("", group, res.getName() +
                             "\n加电池" + number +
                             "\n现电池:" + t +
                             "\n原等级:" + res.getGrade() +
                             "\n卷卷再接再厉");
+*/
+                    //使用自己机器人
+                    String[] atwx = {res.getWxid()};
+                    msgApi.WebApiClient(group,
+                            "\n加电池" + number +
+                            "\n现电池:" + t +
+                            "\n原等级:" + res.getGrade() +
+                            "\n卷卷再接再厉",atwx);
                     updateGradeByBattery(group);
                 } catch (Exception e) {
                     log.error(String.valueOf(e));
+                    msgApi.WebApiClient( group,
+                            res.getName() +
+                                    "\n加电池失败",null);
                     msgACT.WebApiClient("", group, res.getName() +
                             "\n加电池失败");
                 }
@@ -57,14 +69,24 @@ public class ModifyBattery {
                     long t = res.getBattery() - number;
                     updateWrapper.eq("name", name).set("battery", t);
                     userMapper.update(null, updateWrapper);
-                    msgACT.WebApiClient("", group, res.getName() +
+                    /*msgACT.WebApiClient("", group, res.getName() +
                             "\n减电池" + number +
                             "\n现电池:" + t +
                             "\n原等级:" + res.getGrade() +
-                            "\n卷卷再接再厉");
+                            "\n卷卷再接再厉");*/
+                    //使用自己机器人
+                    String[] atwx = {res.getWxid()};
+                    msgApi.WebApiClient( group,
+                            "\n减电池" + number +
+                            "\n现电池:" + t +
+                            "\n原等级:" + res.getGrade() +
+                            "\n卷卷再接再厉",atwx);
                     updateGradeByBattery(group);
                 } catch (Exception e) {
                     log.error(String.valueOf(e));
+                    msgApi.WebApiClient( group,
+                            res.getName() +
+                                    "\n减电池失败",null);
                     msgACT.WebApiClient("", group, res.getName() +
                             "\n减电池失败");
                 }

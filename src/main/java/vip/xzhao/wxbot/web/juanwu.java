@@ -1,3 +1,4 @@
+/*
 package vip.xzhao.wxbot.web;
 
 import com.alibaba.fastjson2.JSONObject;
@@ -39,18 +40,14 @@ public class Juanwu {
     @PostMapping("/juanwu/msg")
     public ResponseEntity<String> receivePost(@RequestHeader MultiValueMap<String, String> headers, @RequestBody String requestBody) {
         //log.debug("接收到请求头: {}", headers);
-        try {
-            JSONObject txt = JSONObject.parseObject(requestBody);
-            log.debug("接收到数据: {}", txt);
-        } catch (Exception e) {
-            log.error("使用阿里巴巴JSON报错: {}", e.getMessage(), e);
-        }
 
         try {
             Message message = JSONObject.parseObject(requestBody, Message.class);
             asyncService.sendToAnotherApi(message); // 异步发送数据到另一个接口
             messageService.handleGroupMsg(message);
         } catch (Exception e) {
+            JSONObject txt = JSONObject.parseObject(requestBody);
+            log.debug("接收报错的数据是: {}", txt);
             log.debug("处理JSON报错: {}", e.getMessage(), e);
             return new ResponseEntity<>("OK", HttpStatus.OK);
         }
@@ -66,3 +63,4 @@ public class Juanwu {
         return new ResponseEntity<>("Get", HttpStatus.OK);
     }
 }
+*/

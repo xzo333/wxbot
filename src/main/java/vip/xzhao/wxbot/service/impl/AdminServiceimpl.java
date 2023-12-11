@@ -7,9 +7,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
+import vip.xzhao.wxbot.active.MsgApi;
 import vip.xzhao.wxbot.data.Message;
 import vip.xzhao.wxbot.data.Orderdate;
 import vip.xzhao.wxbot.data.Userdate;
+import vip.xzhao.wxbot.data.WxMessage;
 import vip.xzhao.wxbot.mapper.OrderdateMapper;
 import vip.xzhao.wxbot.mapper.UserMapper;
 import vip.xzhao.wxbot.service.AdminService;
@@ -17,6 +19,7 @@ import vip.xzhao.wxbot.util.ModifyBattery;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,25 +30,25 @@ public class AdminServiceimpl implements AdminService {
     public final UserMapper userMapper;
     public final OrderdateMapper orderdateMapper;
     public final MsgACT msgACT;
+    public final MsgApi msgApi;
     public final ModifyBattery modifyBattery;
 
-    public AdminServiceimpl(UserMapper userMapper, OrderdateMapper orderdateMapper, MsgACT msgACT, ModifyBattery modifyBattery) {
+    public AdminServiceimpl(UserMapper userMapper, OrderdateMapper orderdateMapper, MsgACT msgACT, MsgApi msgApi, ModifyBattery modifyBattery) {
         this.userMapper = userMapper;
         this.orderdateMapper = orderdateMapper;
         this.msgACT = msgACT;
+        this.msgApi = msgApi;
         this.modifyBattery = modifyBattery;
     }
 
     /**
      * 修改电池
      *
-     * @param message
-     * @return
      */
     @Override
-    public ResponseEntity ModifyBattery(Message message) {
+    public String ModifyBattery(String wid,String groupid,String msg) {
         //信息
-        String text = message.getMsg();
+        String text = msg;
         text = text.replace("@", "");
         log.info("修改电池收到消息：" + text);
         Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)(电池)([\\+\\-=])(\\d+)");
@@ -81,15 +84,24 @@ public class AdminServiceimpl implements AdminService {
                         long tt = res.getHistoricalbattery() + number;
                         updateWrapper.eq("name", name).set("battery", t).set("historicalbattery", tt);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                       /* msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n加电池" + number +
                                 "\n现电池:" + t +
                                 "\n原等级:" + res.getGrade() +
-                                "\n卷卷再接再厉");
-                        updateGradeByBattery(message.getFrom_group());
+                                "\n卷卷再接再厉");*/
+
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,res.getName() +
+                                "\n加电池" + number +
+                                "\n现电池:" + t +
+                                "\n原等级:" + res.getGrade() +
+                                "\n卷卷再接再厉",atwx);
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n加电池失败");
+                        log.error("报错："+ e);
+                        msgApi.WebApiClient(groupid,res.getName() +
+                                "\n加电池失败",null);
                     }
                 } else if (op.equals("-")) {
                     // 处理电池减去数字的情况
@@ -97,34 +109,45 @@ public class AdminServiceimpl implements AdminService {
                         long t = res.getBattery() - number;
                         updateWrapper.eq("name", name).set("battery", t);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        /*msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n减电池" + number +
                                 "\n现电池:" + t +
                                 "\n原等级:" + res.getGrade() +
                                 "\n卷卷再接再厉");
-                        updateGradeByBattery(message.getFrom_group());
+*/
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,res.getName() +
+                                "\n减电池" + number +
+                                "\n现电池:" + t +
+                                "\n原等级:" + res.getGrade() +
+                                "\n卷卷再接再厉",atwx);
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n减电池失败");
+                        log.error("报错："+ e);
+                        msgApi.WebApiClient(groupid,res.getName() +
+                                "\n减电池失败",null);
                     }
                 } else if (op.equals("=")) {
                     // 处理电池=数字
                     try {
                         updateWrapper.eq("name", name).set("battery", number).set("historicalbattery", number);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        msgACT.WebApiClient("", groupid, res.getName() +
                                 "\n现电池:" + number +
                                 "\n原等级:" + res.getGrade() +
                                 "\n卷卷再接再厉");
-                        updateGradeByBattery(message.getFrom_group());
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n修改电池失败");
+                        log.error("报错："+ e);
+                        msgApi.WebApiClient(groupid,res.getName() +
+                                "\n修改电池失败",null);
                     }
                 }
             } catch (Exception e) {
-                msgACT.WebApiClient("", message.getFrom_group(), name +
-                        "\n修改电池失败\n没有这个昵称");
+                log.error("报错："+ e);
+                msgApi.WebApiClient(groupid,name +
+                        "\n修改电池失败\n没有这个昵称",null);
             }
         }
         return null;
@@ -224,12 +247,16 @@ public class AdminServiceimpl implements AdminService {
     }
 
     @Override
-    public ResponseEntity DownloadRealTimeData(Message message) {
-        msgACT.WebApiClient("", message.getFrom_group(), "点击链接下载实时Excel文件\n" +
-/*
+    public String DownloadRealTimeData(String groupid) {
+        /*msgACT.WebApiClient("", groupid, "点击链接下载实时Excel文件\n" +
+*//*
                 "订单表：http://wxbot.6hu.cc/export/order\n" +
-*/
-                "监督员表：http://wxbot.6hu.cc/export/user");
+*//*
+                "监督员表：http://wxbot.6hu.cc/export/user");*/
+        msgApi.WebApiClient(groupid,
+                "点击链接下载实时Excel文件\n" +
+                        "监督员数据：http://wxbot.6hu.cc/export/user",
+                null);
         return null;
     }
 
@@ -260,9 +287,9 @@ public class AdminServiceimpl implements AdminService {
      * 修改权值
      */
     @Override
-    public ResponseEntity modifyContinuedOrderQuantity(Message message) {
+    public String modifyContinuedOrderQuantity(String wid,String groupid,String msg) {
         //信息
-        String text = message.getMsg();
+        String text = msg;
         text = text.replace("@", "");
         log.info("修改权值数收到消息：" + text);
         Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)(权值)([\\+\\-=])(\\d+)");
@@ -281,7 +308,7 @@ public class AdminServiceimpl implements AdminService {
                 UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
                 if (op.equals("+")) {
                     try {
-                        // 续单数
+                        // 权值数
                         long t = Optional.ofNullable(res.getContinuation()).orElse(0L) + Optional.ofNullable(number).orElse(0L);
                         //接单数
                         long tt = Optional.ofNullable(res.getNumberoforders()).orElse(0L) + Optional.ofNullable(number).orElse(0L);
@@ -296,22 +323,30 @@ public class AdminServiceimpl implements AdminService {
 
                         updateWrapper.eq("name", name).set("continuation", t).set("numberoforders", tt);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n权值+" + number +
+                        /*msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                                "[太阳]\n权值+" + number +
                                 "\n订单+" + number +
                                 "\n权值：" + t +
                                 "\n总订单：" + tt +
                                 "\n接单指数：" + ratio.toPlainString()
-/*
+*//*
                                 "\n进行中的订单：" + ttt
-*/
-                        );
+*//*
+                        );*/
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "\n权值+" + number +
+                                "\n订单+" + number +
+                                "\n权值：" + t +
+                                "\n总订单：" + tt +
+                                "\n接单指数：" + ratio.toPlainString(),atwx);
                         //修改电池
                         Long battery = number * 5;
-                        modifyBattery.ModifyBattery(message.getFrom_group(),name,op,battery);
+                        modifyBattery.ModifyBattery(groupid,name,op,battery);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n加权值失败");
+                        msgApi.WebApiClient(groupid,res.getName() +
+                                "加权值失败",null);
                     }
                 } else if (op.equals("-")) {
                     try {
@@ -327,29 +362,37 @@ public class AdminServiceimpl implements AdminService {
 
                         updateWrapper.eq("name", name).set("continuation", t).set("numberoforders", tt);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        /*msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n权值-" + number +
                                 "\n订单-" + number +
                                 "\n权值：" + t +
                                 "\n总订单：" + tt +
                                 "\n接单指数：" + ratio.toPlainString()
-/*
+*//*
                                 "\n进行中的订单：" + ttt
-*/
-                        );
+*//*
+                        );*/
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "\n权值-" + number +
+                                "\n订单-" + number +
+                                "\n权值：" + t +
+                                "\n总订单：" + tt +
+                                "\n接单指数：" + ratio.toPlainString(),atwx);
                         //修改电池
                         Long battery = number * 5;
                         try {
-                            modifyBattery.ModifyBattery(message.getFrom_group(),name,op,battery);
+                            modifyBattery.ModifyBattery(groupid,name,op,battery);
                         } catch (Exception e) {
-                            msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                    "\n 减电池出现bug");
+                            msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                    "\n减电池出现bug",atwx);
                             throw new RuntimeException(e);
                         }
                     } catch (Exception e) {
                         log.debug(String.valueOf(e));
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n减权值数失败");
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "\n减权值数失败",null);
                     }
                 } else if (op.equals("=")) {
                     // 处理续单=
@@ -368,27 +411,28 @@ public class AdminServiceimpl implements AdminService {
 
                         updateWrapper.eq("name", name).set("continuation", number);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
                                 "\n权值=" + number +
                                 "\n权值：" + number +
                                 "\n总订单：" + tt +
-                                "\n接单指数：" + ratio.toPlainString()
-/*
-                                "\n进行中的订单：" + ttt
-*/
-                        );
+                                "\n接单指数：" + ratio.toPlainString(),atwx);
+
                         //修改电池
                         Long battery = number * 5;
-                        modifyBattery.ModifyBattery(message.getFrom_group(),name,op,battery);
-                        updateGradeByBattery(message.getFrom_group());
+                        modifyBattery.ModifyBattery(groupid,name,op,battery);
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n修改权值数失败");
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "修改权值数失败",atwx);
                     }
                 }
             } catch (Exception e) {
-                msgACT.WebApiClient("", message.getFrom_group(), name +
-                        "\n修改权值数失败\n没有这个昵称");
+                String[] atwx = {wid};
+                msgApi.WebApiClient(groupid,"\n" + name +
+                        "\n修改权值数失败\n没有这个昵称",atwx);
             }
         }
         return null;
@@ -398,9 +442,9 @@ public class AdminServiceimpl implements AdminService {
     修改接单
      */
     @Override
-    public ResponseEntity modifyReceipt(Message message) {
+    public String modifyReceipt(String wid,String groupid,String msg) {
         //信息
-        String text = message.getMsg();
+        String text = msg;
         log.info("修改订单数收到消息：" + text);
         Pattern pattern = Pattern.compile("(?<=^|，)([^，]+)(订单)([+\\-=])(\\d+)");
         Matcher matcher = pattern.matcher(text);
@@ -450,19 +494,27 @@ public class AdminServiceimpl implements AdminService {
 
                         updateWrapper.eq("name", name).set("numberoforders", tt).set("existingorder", ttt);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        /*msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n订单+" + number +
                                 "\n权值：" + t +
                                 "\n总订单：" + tt +
                                 "\n接单指数：" + ratio.toPlainString()
-/*
+*//*
                                 "\n进行中的订单：" + ttt
-*/
-                        );
-                        updateGradeByBattery(message.getFrom_group());
+*//*
+                        );*/
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "\n订单+" + number +
+                                "\n权值：" + t +
+                                "\n总订单：" + tt +
+                                "\n接单指数：" + ratio.toPlainString(),atwx);
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n加订单失败");
+                        String[] atwx = {wid};
+                        msgApi.WebApiClient(groupid,"\n" + name +
+                                "\n加订单失败",atwx);
                     }
                 } else if (op.equals("-")) {
                     // 处理电池减去数字的情况
@@ -481,19 +533,27 @@ public class AdminServiceimpl implements AdminService {
 
                         updateWrapper.eq("name", name).set("numberoforders", tt).set("existingorder", ttt);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        /*msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n订单-" + number +
                                 "\n权值：" + t +
                                 "\n总订单：" + tt +
                                 "\n接单指数：" + ratio.toPlainString()
-/*
+*//*
                                 "\n进行中的订单：" + ttt
-*/
-                        );
-                        updateGradeByBattery(message.getFrom_group());
+*//*
+                        );*/
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "\n订单-" + number +
+                                "\n权值：" + t +
+                                "\n总订单：" + tt +
+                                "\n接单指数：" + ratio.toPlainString(),atwx);
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n减订单失败");
+                        String[] atwx = {wid};
+                        msgApi.WebApiClient(groupid,"\n" + name +
+                                "\n减订单失败",atwx);
                     }
                 } else if (op.equals("=")) {
                     // 处理电池=数字
@@ -510,24 +570,33 @@ public class AdminServiceimpl implements AdminService {
 
                         updateWrapper.eq("name", name).set("numberoforders", number);
                         userMapper.update(null, updateWrapper);
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
+                        /*msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
                                 "\n订单=" + number +
                                 "\n权值：" + t +
                                 "\n总订单：" + number +
                                 "\n接单指数：" + ratio.toPlainString()
-/*
+*//*
                                 "\n进行中的订单：" + ttt
-*/
-                        );
-                        updateGradeByBattery(message.getFrom_group());
+*//*
+                        );*/
+                        //使用自己机器人
+                        String[] atwx = {res.getWxid()};
+                        msgApi.WebApiClient(groupid,"\n" + res.getName() +
+                                "\n订单=" + number +
+                                "\n权值：" + t +
+                                "\n总订单：" + number +
+                                "\n接单指数：" + ratio.toPlainString(),atwx);
+                        updateGradeByBattery(groupid);
                     } catch (Exception e) {
-                        msgACT.WebApiClient("", message.getFrom_group(), res.getName() +
-                                "\n修改订单数失败");
+                        String[] atwx = {wid};
+                        msgApi.WebApiClient(groupid,"\n" + name +
+                                "\n修改订单数失败",atwx);
                     }
                 }
             } catch (Exception e) {
-                msgACT.WebApiClient("", message.getFrom_group(), name +
-                        "\n修改订单数失败\n没有这个昵称");
+                String[] atwx = {wid};
+                msgApi.WebApiClient(groupid,"\n" + name +
+                        "\n修改订单数失败\n没有这个昵称",atwx);
             }
         }
         return null;
@@ -639,7 +708,7 @@ public class AdminServiceimpl implements AdminService {
     }
 
     @Override
-    public ResponseEntity deleteSupervisor(String name, String group) {
+    public String deleteSupervisor(String name, String group) {
         try {
             LambdaQueryWrapper<Userdate> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(Userdate::getName, name);
@@ -654,5 +723,46 @@ public class AdminServiceimpl implements AdminService {
             throw new RuntimeException(e);
         }
         return null;
+    }
+
+    @Override
+    public void setupAdministrator(String name, String group) {
+        log.error("设置管理员：{}",name);
+        try {
+            QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
+            queryWrapper.lambda().eq(Userdate::getName, name);
+            Userdate res = userMapper.selectOne(queryWrapper);
+            UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<>();
+            updateWrapper.eq("name", name).set("isadmin", 1);
+            userMapper.update(null, updateWrapper);
+            msgACT.WebApiClient("", group,
+                    res.getName() + "设置成管理成功"
+            );
+        } catch (Exception e) {
+            msgACT.WebApiClient("", group, "设置成管理失败，可能是此昵称没有注册");
+        }
+    }
+
+    @Override
+    public void viewAdministrator(String groupid) {
+        QueryWrapper<Userdate> wrapper = new QueryWrapper<>();
+        // 添加条件，查询isadmin等于1的数据
+        wrapper.eq("isadmin", 1);
+        // 执行查询
+        List<Userdate> userList = userMapper.selectList(wrapper);
+        // 构造要发送的消息
+        StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.append("管理员：\n");
+        messageBuilder.append("姓名\t等级");  // 列名部分
+        for (Userdate user : userList) {
+            messageBuilder.append("\n").append(user.getName())
+                    .append("\t").append(user.getGrade());
+        }
+
+        String messageToSend = messageBuilder.toString();
+
+        // 使用机器人发送消息到指定的群
+        //msgACT.WebApiClient("", groupIdToReceiveMsg, messageToSend);
+        msgApi.WebApiClient(groupid,messageToSend,null);
     }
 }

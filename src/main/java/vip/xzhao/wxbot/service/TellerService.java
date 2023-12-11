@@ -2,6 +2,7 @@ package vip.xzhao.wxbot.service;
 
 import org.springframework.http.ResponseEntity;
 import vip.xzhao.wxbot.data.Message;
+import vip.xzhao.wxbot.data.WxMessage;
 
 /**
  * 接单员
@@ -18,18 +19,14 @@ public interface TellerService {
     /**
      * 昵称
      *
-     * @param message
-     * @return
      */
-    ResponseEntity Name(Message message);
+    String Name(WxMessage message);
 
     /**
      * 查看电池
      *
-     * @param message
-     * @return
      */
-    ResponseEntity ViewBattery(Message message);
+    String ViewBattery(WxMessage message);
 
     /**
      * 查看排名
@@ -37,7 +34,7 @@ public interface TellerService {
      * @param message
      * @return
      */
-    ResponseEntity Ranking(Message message);
+    String Ranking(WxMessage message);
 
     /**
      * 命令说明

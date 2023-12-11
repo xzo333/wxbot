@@ -10,8 +10,6 @@ server:
   port: 1397
 robot:
   remindWeChat: 25984983585997042@openim #派单无人接单@微信 小高
-  groupidTest: 48408656825@chatroom #测试群
-  groupidA: 43209303317@chatroom #闲聊群
   groupidB: 49083670583@chatroom #派单群
   dispatchGroup: 48383963444@chatroom
   #指定群  测试

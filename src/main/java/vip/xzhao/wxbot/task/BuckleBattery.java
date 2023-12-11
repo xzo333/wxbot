@@ -38,7 +38,7 @@ public class BuckleBattery {
             Thread.sleep(3000); // 将当前线程睡眠 3 秒钟
             adminService.RefreshStopPromotionLevel(GroupId);
         } catch (Exception e) {
-            msgACT.WebApiClient("", "25984983585997042@openim", "定时出现报错");
+            msgACT.WebApiClient("", "48383963444@openim", "定时出现报错");
         }
     }
 }

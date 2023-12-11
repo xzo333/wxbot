@@ -2,12 +2,14 @@ package vip.xzhao.wxbot.service;
 
 import org.springframework.http.ResponseEntity;
 import vip.xzhao.wxbot.data.Message;
+import vip.xzhao.wxbot.data.WxMessage;
+import vip.xzhao.wxbot.data.dto.MsgGroupDto;
 
 public interface AdminService {
     /**
      * 修改电池
      */
-    ResponseEntity ModifyBattery(Message message);
+    String ModifyBattery(String wid,String groupid,String msg);
 
     /**
      * 刷新等级
@@ -32,7 +34,7 @@ public interface AdminService {
     /**
      * 下载数据文字
      */
-    ResponseEntity DownloadRealTimeData(Message message);
+    String DownloadRealTimeData(String groupid);
 
     /**
      * 取消订单
@@ -40,13 +42,13 @@ public interface AdminService {
     ResponseEntity CancelOrder(Message message);
 
     /**
-     * 修改续单
+     * 修改权值
      */
-    ResponseEntity modifyContinuedOrderQuantity(Message message);
+    String modifyContinuedOrderQuantity(String wid,String groupid,String msg);
     /**
      * 修改接单
      */
-    ResponseEntity modifyReceipt(Message message);
+    String modifyReceipt(String wid,String groupid,String msg);
     /**
      * 修改已有订单
      */
@@ -55,6 +57,13 @@ public interface AdminService {
     /**
      * 删监督员
      */
-    ResponseEntity deleteSupervisor(String name,String group);
-
+    String deleteSupervisor(String name,String group);
+    /**
+     * 设置管理员
+     */
+    void setupAdministrator(String name, String group);
+    /**
+     * 查看管理员
+     */
+    void viewAdministrator(String groupid);
 }

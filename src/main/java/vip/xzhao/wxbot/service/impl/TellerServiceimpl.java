@@ -6,9 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import vip.xzhao.wxbot.active.MsgACT;
+import vip.xzhao.wxbot.active.MsgApi;
 import vip.xzhao.wxbot.data.Message;
 import vip.xzhao.wxbot.data.Orderdate;
 import vip.xzhao.wxbot.data.Userdate;
+import vip.xzhao.wxbot.data.WxMessage;
 import vip.xzhao.wxbot.mapper.OrderdateMapper;
 import vip.xzhao.wxbot.mapper.UserMapper;
 import vip.xzhao.wxbot.service.TellerService;
@@ -24,11 +26,14 @@ import java.util.Optional;
 @Service
 public class TellerServiceimpl implements TellerService {
     public final MsgACT msgACT;
+    public final MsgApi msgApi;
+
     public final UserMapper userMapper;
     public final OrderdateMapper orderdateMapper;
 
-    public TellerServiceimpl(MsgACT msgACT, UserMapper userMapper, OrderdateMapper orderdateMapper) {
+    public TellerServiceimpl(MsgACT msgACT, MsgApi msgApi, UserMapper userMapper, OrderdateMapper orderdateMapper) {
         this.msgACT = msgACT;
+        this.msgApi = msgApi;
         this.userMapper = userMapper;
         this.orderdateMapper = orderdateMapper;
     }
@@ -117,45 +122,75 @@ public class TellerServiceimpl implements TellerService {
     }
 
     @Override
-    public ResponseEntity Name(Message message) {
+    public String Name(WxMessage message) {
+        //信息
+        String content = message.getContent();
+        //群Id
+        String groupId = message.getGroupId();
+        //发信息微信id
+        String wid = message.getUserId();
+
         QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
-        queryWrapper.lambda().eq(Userdate::getWxid, message.getFrom_wxid());
+        queryWrapper.lambda().eq(Userdate::getWxid, wid);
         Userdate res = userMapper.selectOne(queryWrapper);
         Userdate userdate = new Userdate();
         //String str = message.getMsg();
-        String str = message.getMsg().replace("昵称:", "昵称：");
+        String str = content.replace("昵称:", "昵称：");
         //昵称
         String nickname = str.substring(str.indexOf("：") + 1, str.length() - 1);
-        if (res == null) {
-            userdate.setWxid(message.getFrom_wxid());
-            userdate.setName(nickname);
-            userdate.setBattery(10L);
-            userdate.setHistoricalbattery(10L);
-            userdate.setGrade("实习");
-            userdate.setState(0L);
-            userdate.setContinuation(1L);
-            userdate.setNumberoforders(1L);
-            userMapper.insert(userdate);
-            msgACT.WebApiClient("", message.getFrom_group(), "昵称：" + nickname + "\n等级：见习\n注册成功\n新用户赠送10电池");
+
+        //判断昵称不能重复
+        queryWrapper.clear();
+        queryWrapper.lambda().eq(Userdate::getName, nickname);
+        Userdate existingUser = userMapper.selectOne(queryWrapper);
+        if (existingUser != null) {
+            // 昵称已存在，处理逻辑
+            String[] atwx = {wid};
+            msgApi.WebApiClient(groupId,
+                    "\n昵称：" + nickname + "\n昵称已存在，换个昵称",atwx);
         } else {
-            if (res.getName().equals("游离态")) {
-                msgACT.WebApiClient("", message.getFrom_group(), "呜呜呜，为啥要改昵称，不改好嘛");
+            // 昵称不存在，处理逻辑
+            if (res == null) {
+                userdate.setWxid(wid);
+                userdate.setName(nickname);
+                userdate.setBattery(10L);
+                userdate.setHistoricalbattery(10L);
+                userdate.setGrade("实习");
+                userdate.setState(0L);
+                userdate.setContinuation(1L);
+                userdate.setNumberoforders(1L);
+                userMapper.insert(userdate);
+                // msgACT.WebApiClient("", message.getFrom_group(), "昵称：" + nickname + "\n等级：见习\n注册成功\n新用户赠送10电池");
+                //使用自己机器人
+                String[] atwx = {wid};
+                msgApi.WebApiClient(groupId,
+                        "\n昵称：" + nickname + "\n等级：见习\n注册成功\n新用户赠送10电池", atwx);
             } else {
                 UpdateWrapper<Userdate> updateWrapper = new UpdateWrapper<Userdate>()
-                        .eq("wxid", message.getFrom_wxid())
+                        .eq("wxid", wid)
                         .set("name", nickname);
                 userMapper.update(null, updateWrapper);
-                msgACT.WebApiClient("", message.getFrom_group(), "原昵称：" + res.getName() + "\n修改成\n新昵称：" + nickname + "\n修改成功");
+                //msgACT.WebApiClient("", message.getFrom_group(), "原昵称：" + res.getName() + "\n修改成\n新昵称：" + nickname + "\n修改成功");
+                //使用自己机器人
+                String[] atwx = {res.getWxid()};
+                msgApi.WebApiClient(groupId,
+                        "\n原昵称：" + res.getName() + "\n修改成\n新昵称：" + nickname + "\n修改成功", atwx);
             }
         }
         return null;
     }
 
+    //查看电池
     @Override
-    public ResponseEntity  ViewBattery(Message message) {
+    public String ViewBattery(WxMessage message) {
+        //群Id
+        String groupId = message.getGroupId();
+        //发信息微信id
+        String wid = message.getUserId();
+
         try {
             QueryWrapper<Userdate> queryWrapper = new QueryWrapper<>();
-            queryWrapper.lambda().eq(Userdate::getWxid, message.getFrom_wxid());
+            queryWrapper.lambda().eq(Userdate::getWxid, wid);
             Userdate res = userMapper.selectOne(queryWrapper);
 
             if (res != null) {
@@ -169,30 +204,43 @@ public class TellerServiceimpl implements TellerService {
                      ratio = t.divide(tt, 2, RoundingMode.HALF_UP);
                 }
 
-                msgACT.WebApiClient("", message.getFrom_group(),
+               /* msgACT.WebApiClient("", message.getFrom_group(),
                         res.getName() +
                                 "\n等级：" + res.getGrade() +
                                 "\n电池：" + res.getBattery() +
                                 "\n权值：" + t +
                                 "\n总订单：" + tt +
-                                "\n接单指数：" + ratio.toPlainString());
+                                "\n接单指数：" + ratio.toPlainString());*/
 /*
                                 "\n进行中的订单：" + ttt);
 */
+                //使用自己机器人
+                String[] atwx = {res.getWxid()};
+                msgApi.WebApiClient(groupId,"\n" + res.getName() +
+                        "\n等级：" + res.getGrade() +
+                        "\n电池：" + res.getBattery() +
+                        "\n权值：" + t +
+                        "\n总订单：" + tt +
+                        "\n接单指数：" + ratio.toPlainString(),atwx);
                 return null;
             } else {
-                msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请先设置昵称");
+                //msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请先设置昵称");
+                String[] atwx = {wid};
+                msgApi.WebApiClient(groupId,"\n查询失败，请先设置昵称",atwx);
                 return null;
             }
         } catch (Exception e) {
             log.error("查询电池报错", e);
-            msgACT.WebApiClient("", message.getFrom_group(), "查询失败，请重试");
+            msgApi.WebApiClient(groupId,"查询电池失败，请联系机器人的大哥",null);
             return null;
         }
     }
 
     @Override
-    public ResponseEntity Ranking(Message message) {
+    public String Ranking(WxMessage message) {
+        //群Id
+        String groupId = message.getGroupId();
+
         QueryWrapper<Userdate> wrapper = new QueryWrapper<>();
         wrapper.select("name", "battery", "grade","continuation","numberoforders")
                 .orderByDesc("battery")
@@ -212,9 +260,8 @@ public class TellerServiceimpl implements TellerService {
 
         String messageToSend = messageBuilder.toString();
 
-        // 使用机器人发送消息到指定的QQ群
-        String groupIdToReceiveMsg = message.getFrom_group();  // 接收消息的QQ群号
-        msgACT.WebApiClient("", groupIdToReceiveMsg, messageToSend);
+        // 使用机器人发送消息到指定的群
+        msgApi.WebApiClient(groupId,messageToSend,null);
         return null;
     }
 

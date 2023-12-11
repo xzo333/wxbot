@@ -1,11 +1,10 @@
 package vip.xzhao.wxbot.service;
 
-import org.springframework.http.ResponseEntity;
-import vip.xzhao.wxbot.data.Message;
+import vip.xzhao.wxbot.data.WxMessage;
 
 public interface DispatchService {
     /**
-     * 接单
+     * 派单接单
      */
-    ResponseEntity order(Message message);
+    String order(WxMessage wxMessage);
 }

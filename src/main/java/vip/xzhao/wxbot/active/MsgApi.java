@@ -16,12 +16,13 @@ public class MsgApi {
      * @return
      */
     public String WebApiClient(String chatId, String Msg, String[] atIds) {
-        WebClient webClient = WebClient.create("https://wxserver.6hu.cc/sendTextMessage");
+        WebClient webClient = WebClient.create("http://wxserver.6hu.cc/sendTextMessage");
         ApiSend send = new ApiSend();
-        send.setBotId("wxid_evyctz707rf622");
+        send.setBotId("wxid_n5vjejrw1uyt22");//机器人
         send.setChatId(chatId);
         send.setContent(Msg);
         send.setAtIds(atIds);
+
 
         return webClient.post()
                 .contentType(MediaType.APPLICATION_JSON)
